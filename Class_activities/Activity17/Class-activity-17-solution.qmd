@@ -1,0 +1,200 @@
+---
+title: "Class Activity 17"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      size = "small", 
+                      collapse = TRUE, 
+                      comment = NA, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      error = TRUE)
+
+# load the necessary libraries
+library(tidyverse)
+library(stringr)
+library(purrr)
+library(ggthemes)
+library(rvest)
+library(polite)
+
+# Set ggplot theme
+theme_set(theme_stata(base_size = 8))
+```
+
+
+\vspace*{1in}
+
+
+## Group Activity 1
+
+1. Go to the [the numbers webpage](https://www.the-numbers.com/movie/budgets/all) and extract the table on the front page.
+
+```{r}
+session1 <- bow(url = "https://www.the-numbers.com/movie/budgets/all") %>% scrape() %>%
+  html_nodes(css = "table") %>%
+  html_table()
+
+table_base <- session1 %>% .[[1]]
+```
+
+
+2. Find out the number of pages that contain the movie table, while looking for the changes in the url in the address bar. How does the url changes when you go to the next page?
+
+*Answer:* The starting count of the movie gets concatenated to the url in increments of 100.
+
+
+3. Write a for loop to store all the data in multiple pages to a single data frame.
+
+```{r}
+library(tidyverse)
+library(rvest)
+
+new_urls <- "https://www.the-numbers.com/movie/budgets/all/"
+
+# Create an empty data frame
+df1 <- list()
+
+# Generate a vector of indices
+index <- seq(1, 6301, 100)
+```
+
+
+```{r}
+# Loop through indices, scrape data, and bind the resulting data frames
+start_time <- proc.time() # Capture start time
+for (i in 1:length(index)) {
+  url <- str_glue("{new_urls}{index[i]}")
+  webpage <- read_html(url)
+  table_new <- html_table(webpage)[[1]] %>%
+    janitor::clean_names() %>%
+    mutate(across(everything(), as.character))
+  df1[[i]] <- table_new
+}
+end_time <- proc.time() # Capture end time
+end_time - start_time # Calculate duration
+
+df1_final <- do.call(rbind, df1)
+df1_final1 <- reduce(df1, dplyr::bind_rows)
+```
+
+
+
+
+```{r}
+# alternate using map_df()
+start_time <- proc.time() # Capture start time
+
+urls <- map(index, function(i) str_glue({new_urls}, {index[i]}))
+urls <- map(index, ~str_glue({new_urls}, {.x}))
+
+library(tidyverse)
+library(rvest)
+library(glue)
+library(janitor)
+
+# Assuming 'urls' is already defined
+movies_data <- map_df(urls, ~read_html(.x) %>%
+                        html_table() %>%
+                        .[[1]] %>%
+                        janitor::clean_names() %>% 
+                        mutate(across(everything(), as.character))) 
+end_time <- proc.time() # Capture end time
+end_time - start_time # Calculate duration
+```
+
+
+## Group Activity 2
+
+1. Go to the [scrapethis](https://www.scrapethissite.com/pages/forms/) and extract the table on the front page.
+
+```{r}
+session1 <- bow(url = "https://www.scrapethissite.com/pages/forms/") %>% scrape() %>%
+  html_nodes(css = "table") %>%
+  html_table()
+
+table_base <- session1 %>% .[[1]]
+```
+
+
+2. Find out the number of pages that contain the movie table, while looking for the changes in the url in the address bar. How does the url changes when you go to the next page?
+
+*Answer:* The url field has `?page_num=` added with the number of pages running from 1 to 24.
+
+
+3. Write a for loop to store all the data in multiple pages to a single data frame.
+
+```{r}
+library(tidyverse)
+library(rvest)
+
+new_urls <- "http://scrapethissite.com/pages/forms/?page_num="
+
+# Create an empty data frame
+df2 <- list()
+
+# Generate a vector of indices
+index <- seq(1, 24)
+```
+
+
+
+
+```{r}
+library(tidyverse)
+library(rvest)
+
+new_urls <- "http://scrapethissite.com/pages/forms/?page_num="
+
+# Generate a vector of indices
+index <- seq(1, 24)
+```
+
+
+
+```{r}
+df2 <- list()
+start_time <- proc.time() # Capture start time
+
+for (i in index) {
+  url <- str_glue("{new_urls}{i}")
+  webpage <- read_html(url)
+  table_new <- html_table(webpage)[[1]] %>%
+    janitor::clean_names() %>%
+    #set_names(~ifelse(is.na(.) | . == "", paste("V", seq_along(.), sep=""), .)) %>%
+    mutate(across(everything(), as.character))
+  df2[[i]] <- table_new
+}
+end_time <- proc.time() # Capture end time
+end_time - start_time # Calculate duration
+
+df2_final <- bind_rows(df2)
+df2_final
+```
+
+
+```{r}
+# alternate using map
+urls <- map(index, function(i) str_glue({new_urls}, {i}))
+urls <- map(index, ~str_glue("{new_urls}{.x}"))
+
+start_time <- proc.time() # Capture start time
+sports_data <- map_df(urls, ~read_html(.x) %>%
+                  html_table() %>%
+                  .[[1]] %>%
+                  janitor::clean_names() %>%
+                  mutate(across(everything(), as.character)))
+
+end_time <- proc.time() # Capture end time
+end_time - start_time # Calculate duration
+
+sports_data
+```
+

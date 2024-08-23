@@ -1,0 +1,175 @@
+---
+title: "Class Activity 25"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      size = "small", 
+                      collapse = TRUE, 
+                      comment = NA, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      error = TRUE) # change it to TRUE
+
+# load the necessary libraries
+library(tidyverse) 
+library(ggthemes)
+library(janitor)
+library(broom)
+library(mlbench)
+library(tidymodels)
+library(probably)
+
+select <- dplyr::select
+theme_set(theme_stata(base_size = 10))
+
+data(PimaIndiansDiabetes2)
+db <- PimaIndiansDiabetes2
+db <- db %>% drop_na()  %>% 
+  mutate(diabetes = fct_relevel(diabetes, c("neg", "pos"))) # Relevels 'diabetes' factor to ensure 'neg' comes before 'pos'
+```
+
+
+\vspace*{1in}
+
+
+## Group Activity 1
+
+In this activity, we will calculate the probability of diabetes for a glucose level of 150 mg/dL using the logistic regression coefficients $\beta_0 = -5.61$ and $\beta_1 = 0.0392$.
+
+### a. Calculate Log Odds
+
+First, calculate the log odds for a glucose level of 150 mg/dL.
+
+```{r}
+
+```
+
+
+### b. Convert Log Odds to Odds
+
+```{r}
+
+```
+
+
+### c. Convert Odds to Probability
+
+Finally, convert the odds to probability.
+
+```{r}
+
+```
+
+The probability of having diabetes at a glucose level of 150 mg/dL is calculated to be 
+
+---------------------------------------------------------
+
+## Group Activity 2
+
+a. Let's fit the logistic regression model to predict the `diabetes` status given the `glucose` level.
+
+```{r}
+set.seed(12345)
+db_single <- db %>% select(_____, ______)
+db_split <- initial_split(db_single, prop = 0.80)
+
+# Create training data
+db_train <- db_split %>% training()
+
+# Create testing data
+db_test <- db_split %>% testing()
+
+fitted_logistic_model <- logistic_reg() %>% # Call the model function
+        # Set the engine/family of the model
+        set_engine() %>%
+        # Set the mode
+        set_mode() %>%
+        # Fit the model
+        fit()
+
+tidy(fitted_logistic_model)
+```
+
+
+b. We are interested in predicting the `diabetes` status of patients depending on the amount of `glucose`. Verify that the `glucose` value of 143.11 gives the probability of having `diabetes` as 1/2.
+
+
+$$log\left(\frac{p}{1-p}\right)  = \beta_0 + \beta_1x$$
+*Answer:*
+
+
+
+c. What value of glucose is needed to have a probability of diabetes of 0.75?
+
+*Answer:*
+
+
+
+d. Make a classifier that classifies the diabetes status of new patients with a threshold of 0.5, i.e, a new patient is classified as negative if the estimated class probability is less than 0.75. Also, create a confusion matrix of the resulting predictions. Evaluate the model based on accuracy, sensitivity, specificity, and ppv.
+
+
+```{r}
+# Prediction Probabilities
+
+pred_prob <- predict(,  new_data = ,   type = )
+
+db_results <- db_test %>% bind_cols(pred_prob) %>%
+  mutate(.pred_class = make_two_class_pred(.pred_neg, levels(diabetes), threshold = .55)) %>%
+  select(diabetes, glucose, contains(".pred"))
+
+
+db_results %>%  
+  conf_mat(diabetes,.pred_class) %>% 
+  autoplot(type = "heatmap")
+
+# Evaluating the model
+eval_metrics <- metric_set(accuracy, sensitivity, specificity, ppv)
+
+eval_metrics(data = db_results,
+             truth = diabetes,
+             estimate = .pred_class) %>% select(-2) 
+```
+
+
+e. Evaluate the performance of a diabetes prediction model at different classification thresholds and visualize how various metrics such as accuracy, sensitivity, and PPV change across these thresholds. Use a sequence of threshold values, apply each one to classify test data, calculate the performance metrics for each classification, and then create a line plot to illustrate the results.
+
+```{r}
+# Step 1: Generate a sequence of thresholds
+thresholds <- 
+
+# Step 2: Calculate metrics for each threshold using map
+metrics_list <- map_df(, ~{
+  db_results <- db_test %>% 
+    bind_cols(pred_prob) %>%
+    mutate(.pred_class = make_two_class_pred(.pred_neg, levels(diabetes), threshold = )) %>%
+    select(diabetes, glucose, contains(".pred"))
+  
+  metrics <- eval_metrics(data = db_results, truth = diabetes, estimate = .pred_class) %>%
+    mutate(threshold = ) %>%
+    select(-2) 
+  return(metrics)
+})
+
+# Step 3: Plot the metrics across thresholds
+ggplot(metrics_list, aes(x = , y = , color = )) +
+  geom_line() +
+  labs(title = "Model Performance Metrics Across Thresholds",
+       x = "Threshold",
+       y = "Metric Value") +
+  theme_minimal() +
+  scale_color_viridis_d(begin = 0.2, end = 0.8, direction = 1, option = "C")
+```
+
+
+
+
+
+
+

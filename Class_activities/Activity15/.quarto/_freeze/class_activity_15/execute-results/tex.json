@@ -1,0 +1,15 @@
+{
+  "hash": "e8f8611e689700a2bfe0cea63d328502",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Class Activity 15\"\nauthor: \"Your name here\"\ndate: \" April 26 2024\"\nformat:\n  pdf: default\n  html:\n    df_print: paged\neditor: visual\nexecute: \n  eval: true\n  echo: true\n  warning: false\n  error: true\n---\n\n\n\n\n\n\n\n\\vspace*{1in}\n\n\n## Group Activity 1\n\n### a. Write a for loop to iterate over the columns of the 'energy' dataset and print the names of all columns containing the string \"House\". Please use the function `colnames()` to extract the column names and store the results in a list.\n\n*Answer:*\n\n\n\n\n### b. Using a for loop, calculate and print the mean energy consumption of houses you identified in part a.\n\n\n\n-------------------------------------------------------------------------------------\n\n## Group Activity 2\n\n\n**1.** Make a data frame of quantiles for `energy` buildings in columns 9-90 (you will need `na.rm = TRUE`)\n\n\n\n\n**2.**  Add a variable to identify the quantile\n\n\n\n\n**3.**  Reshape the data frame to make variables `stat` (describing the quantile), `building` and `quant` (quantile value)\n\n\n\n\n**4.**  Plot the KWH value for each quantile on the x-axis for the buildings `Sayles-Hill`, `Center_for_Mathematics_&_Computing`, `Olin_Hall_of_Science`\n\n\n\n\n\n\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": null,
+    "postProcess": false
+  }
+}

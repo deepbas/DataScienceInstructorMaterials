@@ -1,0 +1,315 @@
+---
+title: "Midterm II Study Guide and Review"
+author: "Deepak Bastola"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+
+## Midterm II Study Guide
+
+Format: In Class with open-ended questions.
+
+One-sided Cheat-sheet allowed (A4 paper) and a basic calculator allowed.
+
+  - You may use a calculator 
+  - You are not permitted to use a laptop or classroom computer. 
+
+### Topics
+
+- The exam covers iterations, functionals, web scraping, shiny kNN, linear regression and logistic regression (through Mon. 05/20)
+
+- You will be tested on your conceptual understanding of the tools and algorithms, shiny function logic, the accuracy metrics, and the associated construction of the workflow in R that we have discussed in the class. I will not make you write extremely complicated code from scratch, but be prepared to write small chunks of code. Additional ways I could assess your understanding of R include (but are not limited to):
+
+  - Identifying the error in written code.
+  - Putting lines of code in order to complete a specified task.
+  - Describing the output resulting from a code/code-chunk.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, warning = FALSE, 
+                      message=FALSE, include=TRUE, 
+                      fig.height = 4, fig.width = 5)
+
+
+library(tidyverse) 
+library(tidymodels)
+library(mlbench)     # for PimaIndiansDiabetes2 dataset
+library(yardstick) # extra package for getting metrics
+library(parsnip) # tidy interface to models
+library(ggthemes)
+library(vip)
+library(ISLR)
+library(rpart.plot)
+library(janitor)
+library(ranger)
+library(lubridate)
+# prepare datasets
+
+library(datasets)
+mydata <- as.data.frame(matrix(ldeaths, nrow = 6))
+colnames(mydata) <- str_to_lower(month(1:12, label = TRUE))
+mydata <- mydata %>% tibble() %>% mutate(year = seq(1974, 1979)) %>% relocate(year, .before = jan)
+```
+
+
+## Your name: 
+
+
+# Questions
+
+
+## Q1 
+
+Given below are the monthly deaths from bronchitis, emphysema and asthma in the UK from 1974 to 1979.
+
+```{r}
+knitr::kable(mydata)
+```
+
+
+
+### a.  Describe what is returned by the code below, including the type of R object produced, the length or dimension of the object, and the information contained in the object.
+
+```{r, eval=FALSE}
+map_dbl(mydata %>% select(-1), mean) %>% mean()
+```
+
+\vspace*{1.5in}
+
+
+### b. Describe what is returned by the code below, including the type of R object produced, the length or dimension of the object, and the information contained in the object.
+
+```{r, eval=FALSE}
+ratio_fun <- function(x) quantile(x, probs= c(0.25, 0.5, 0.75))
+map_dfc(mydata %>% select(-1), ratio_fun)
+```
+
+
+\vspace*{1.5in}
+
+
+### c. Describe what is returned by the code below, including the type of R object produced, the length or dimension of the object, and the information contained in the object.
+
+```{r, eval=FALSE}
+lapply(mydata %>% select(-1), ratio_fun) %>%  
+  unlist()
+```
+
+
+\vspace*{1.5in}
+
+## Q2 Shiny UI and Server Logic
+
+### a. Describe the relationship between `ui` and `server` in a Shiny application. How do they interact?
+
+\vspace*{1.5in}
+
+### b. Given the code snippet below, identify and explain any errors that would prevent the app from displaying a histogram of the generated data.
+
+```{r, eval=FALSE}
+library(shiny)
+ui <- fluidPage(
+  titlePanel("Data Histogram"),
+  sidebarLayout(
+    sidebarPanel(
+      sliderInput("obs", "Number of observations:", min = 0, max = 1000, value = 500)
+    ),
+    mainPanel(
+      plotOutput("distPlot")
+    )
+  )
+)
+
+server <- function(input, output) {
+  output$distPlot <- renderPlot({
+    data <- rnorm(input$obs, input = 100)  
+    hist(data)
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+
+### c. Consider a Shiny app that allows users to select a dataset from a dropdown menu and displays a summary of that dataset. Identify potential problems in this hypothetical Shiny code snippet and suggest improvements.
+
+```{r}
+library(shiny)
+ui <- fluidPage(
+  selectInput("dataset", "Choose a dataset:", choices = c("mtcars", "iris")),
+  tableOutput("summaryTable")
+)
+
+server <- function(input, output) {
+  data <- reactive({
+    switch(input$dataset,
+           "mtcars" = mtcars,
+           "iris" = iris)
+  })
+
+  output$summaryTable <- renderTable({
+    summary(data())
+  })
+}
+
+shinyApp(ui = ui, server = server)
+
+```
+
+
+### d. Given a Shiny application that uses actionButton to trigger calculations, explain the purpose of this input type and describe a scenario where it might be useful.
+
+```{r}
+ui <- fluidPage(
+  actionButton("calc", "Calculate"),
+  numericInput("num", "Enter a number:", 10),
+  textOutput("result")
+)
+
+server <- function(input, output) {
+  observeEvent(input$calc, {
+    result <- sqrt(input$num)
+    output$result <- renderText({
+      paste("The square root is:", result)
+    })
+  })
+}
+
+shinyApp(ui = ui, server = server)
+
+```
+
+
+
+
+
+\vspace*{1.5in}
+
+## Q3 : K-nearest neighbor
+
+Consider the `Smarket` dataset, which provides daily percentage returns for the S&P 500 stock index from 2001 to 2005. Your task is to fit a K-nearest neighbor model to predict the direction of stock returns.
+
+#### a. . The following code splits the Smarket dataset into a training set and a test set. Explain the purpose of splitting the data and what stratification accomplishes in this context.
+
+```{r}
+set.seed(1234)
+
+data_Smarket <- as_tibble(Smarket)
+split <- initial_split(data_Smarket, strata = Direction, prop = 4/5)
+Smarket_train <- training(split)
+Smarket_test <- testing(split)
+
+# glimpses of data
+glimpse(Smarket_train)
+glimpse(Smarket_test)
+```
+
+
+\vspace*{2.5in}
+
+
+#### b. The following trained model is used to produce a data-frame of the actual and predicted `Direction` in the test dataset. Call this data-frame `Smarket_results`. What information does `Smarket_results` contain? What is the dimension of this dataset? Explain.
+
+
+
+```{r}
+Smarket_recipe <- recipe(Direction ~ Lag1 + Lag2 + Lag3 + Year + Volume, 
+                         data = Smarket_train) %>% 
+  step_center(all_predictors()) %>% 
+  step_scale(all_predictors()) %>%
+  prep()
+
+Smarket_knn_spec <- nearest_neighbor(mode = "classification",
+                             engine = "kknn",
+                             weight_func = "rectangular",
+                             neighbors = 5)
+
+Smarket_workflow <- workflow() %>% 
+  add_recipe(Smarket_recipe) %>%
+  add_model(Smarket_knn_spec)
+
+Smarket_fit <- fit(Smarket_workflow, data = Smarket_train)
+
+test_features <- Smarket_test %>% select(Direction, Lag1, Lag2, Lag3, Year, Volume)
+nn1_pred3 <- predict(Smarket_fit, test_features, type = "raw")
+Smarket_results <- Smarket_test %>% 
+  select(Direction) %>% 
+  bind_cols(predicted = nn1_pred3) %>% mutate(Direction = as.factor(Direction))
+```
+
+
+```{r, eval = FALSE, echo=FALSE}
+glimpse(Smarket_results)
+```
+
+\vspace*{2.5in}
+
+
+
+#### c.  Calculate the sensitivity, specificity, accuracy, and positive predictive value of the classifier based on the confusion matrix below. Discuss the interpretation of these metrics in the context of this problem.
+
+
+```{r}
+conf_mat(Smarket_results, truth = Direction, estimate = predicted)
+```
+
+\vspace*{2.5in}
+
+
+
+## Q4 Miscellaneous
+
+#### (a) Differentiate between supervised and unsupervised learning by providing examples of situations where each would be most appropriate.
+
+
+\vspace*{1.5in}
+
+
+#### (b) Discuss the significance of feature scaling in the K-NN algorithm and illustrate its impact with a hypothetical example.
+
+\vspace*{1.5in}
+
+
+
+
+#### (c) (True/False) Recall is a more relevant metric than precision in scenarios where False Negatives are more detrimental than False Positives. Explain your answer.
+
+\vspace*{1.5in}
+
+
+
+#### (d)  Explain the rationale behind data preprocessing in the KNN algorithm, discussing how the algorithm's performance might be influenced by unprocessed data.
+
+\vspace*{1.5in}
+
+
+
+#### (e) (Multiple Choice) Among the following values for K in K-NN, which is most likely to cause underfitting?
+
+  1. 30
+  2. 5
+  3. 1
+  
+\vspace*{1.5in}
+
+  
+#### (f) Logistic regression is a machine learning algorithm that is typically used to predict the probability of what kind of variable? Explain the reasoning behind your choice.
+
+(A) categorical independent variable
+(B) categorical dependent variable.
+(C) numerical dependent variable.
+(D) numerical independent variable.
+
+\vspace*{1.5in}
+
+
+
+#### (g) For a K-NN classification model, how would you expect the model's performance to change as K increases? Discuss considering both bias-variance trade-off and the model's complexity.
+
+\vspace*{1.5in}
+
+

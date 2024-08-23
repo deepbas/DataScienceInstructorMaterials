@@ -1,0 +1,422 @@
+---
+title: "Midterm I"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(comment=NA, fig.align = 'center')
+knitr::opts_chunk$set(echo = TRUE, size = "small", collapse=TRUE, comment=NA, warning = FALSE, message = FALSE)
+
+library(gapminder)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(forcats)
+library(ggthemes)
+library(tidyr)
+data("gapminder")
+select <- dplyr::select
+theme_set(theme_stata(base_size = 10))
+```
+
+<center>  
+Name:        
+</center> 
+
+<br>
+
+## Total Points: 100   
+
+<br>
+<br>
+
+
+*`Gapminder` data*
+
+Data includes health and income outcomes for 142 countries from 1952 to 2007 in increments of 5 years. The variables in the dataset are `country`, `continent`, `year`, `lifeExp`, `pop`, and `gdpPercap`. The descriptions for the variables are:
+
+  - `country` : name of the country, factor with 142 levels
+  - `continent`: name of the continent, factor with 5 levels
+  - `year` : ranges from 1952 to 2007 in increments of 5 years (12 distinct years)
+  - `lifeExp`: life expectancy at birth, in years
+  - `pop` : population
+  - `gdpPercap` : GDP per capita (US$\$$, inflation-adjusted)
+
+
+```{r}
+glimpse(gapminder)
+```
+
+The distinct continents in the data are as follows:
+
+```{r}
+gapminder %>% pull(continent) %>% unique()
+```
+
+
+#
+
+
+## Part 1: Data Wrangling *(10 points each)*
+
+**What do the following code chunks do?** Provide a thorough and intuitive (3-5 sentences) description of the output from each of the following R chunks. The chunks produce a new data set. Please give the dimensions in addition to your description.  Write your descriptions in regular English, without using variable names.
+
+
+### a. 
+
+
+```{r, echo=FALSE, eval=FALSE}
+gapminder %>%
+  filter(year %in% c(1952, 2007)) %>%
+  group_by(continent, year) %>%
+  summarize(median_gdpPercap = median(gdpPercap),
+            median_lifeExp = median(lifeExp),
+            median_pop = median(pop)) 
+```
+
+
+```{r, eval=FALSE}
+gapminder %>%
+  filter(year %in% c(1952, 2007)) %>%
+  group_by(continent, year) %>%
+  summarize(median_gdpPercap = median(gdpPercap),
+            median_lifeExp = median(lifeExp),
+            median_pop = median(pop)) 
+```
+
+
+\vspace*{2.5in}
+
+
+### b.
+
+```{r, eval=FALSE}
+gapminder %>%
+  mutate(gdp_total = gdpPercap * pop) %>%
+  group_by(continent, year) %>%
+  summarize(gdp_continent = sum(gdp_total)) %>%
+  pivot_wider(names_from = year, 
+              values_from = gdp_continent, 
+              names_prefix = "year_")
+```
+
+\vspace*{2.5in}
+
+
+```{r, echo=FALSE, eval=FALSE}
+gapminder %>%
+  mutate(gdp_total = gdpPercap * pop) %>%
+  group_by(continent, year) %>%
+  summarize(gdp_continent = sum(gdp_total)) %>%
+  pivot_wider(names_from = year, 
+              values_from = gdp_continent, 
+              names_prefix = "year_")
+```
+
+
+### c. 
+
+```{r, eval=FALSE}
+set.seed(143)
+selected_countries <- gapminder %>%
+  distinct(country, continent) %>%
+  group_by(continent) %>%
+  slice_sample(n = 1) %>%
+  pull(country)
+
+gapminder %>%
+  filter(country %in% selected_countries) %>%
+  filter(year %in% c(1952, 2007)) %>%
+  group_by(country, year) %>%
+  summarize(median_gdpPercap = median(gdpPercap),
+            median_lifeExp = median(lifeExp),
+            total_pop = sum(pop)) %>%
+  pivot_longer(cols = -c(country, year), 
+               names_to = "stat", 
+               values_to = "value") 
+```
+
+\vspace*{5in}
+
+
+```{r, echo=FALSE, eval=FALSE}
+set.seed(143)
+selected_countries <- gapminder %>%
+  distinct(country, continent) %>%
+  group_by(continent) %>%
+  slice_sample(n = 1) %>%
+  pull(country)
+
+gapminder %>%
+  filter(country %in% selected_countries) %>%
+  filter(year %in% c(1952, 2007)) %>%
+  group_by(country, year) %>%
+  summarize(median_gdpPercap = median(gdpPercap),
+            median_lifeExp = median(lifeExp),
+            total_pop = sum(pop)) %>%
+  pivot_longer(cols = -c(country, year), 
+               names_to = "stat", 
+               values_to = "value") 
+```
+
+
+### d. 
+
+
+```{r, eval=FALSE}
+set.seed(143)
+gapminder %>%
+  filter(continent == "Asia") %>%
+  distinct(country) %>%
+  slice_sample(n = 5) %>%
+  inner_join(gapminder, by = "country") %>%
+  filter(year %in% c(1952, 2007)) %>%
+  group_by(country, year) %>%
+  summarize(median_gdpPercap = median(gdpPercap),
+            median_lifeExp = median(lifeExp),
+            total_pop = sum(pop)) %>%
+  pivot_longer(cols = -c(country, year), 
+               names_to = "stat", 
+               values_to = "value") %>%
+  pivot_wider(names_from = year, 
+              values_from = value, 
+              names_prefix = "year_")
+```
+
+\vspace*{3in}
+
+
+```{r, echo=FALSE, eval=FALSE}
+set.seed(143)
+gapminder %>%
+  filter(continent == "Asia") %>%
+  distinct(country) %>%
+  slice_sample(n = 5) %>%
+  inner_join(gapminder, by = "country") %>%
+  filter(year %in% c(1952, 2007)) %>%
+  group_by(country, year) %>%
+  summarize(median_gdpPercap = median(gdpPercap),
+            median_lifeExp = median(lifeExp),
+            total_pop = sum(pop)) %>%
+  pivot_longer(cols = -c(country, year), 
+               names_to = "stat", 
+               values_to = "value") %>%
+  pivot_wider(names_from = year, 
+              values_from = value, 
+              names_prefix = "year_")
+```
+
+
+\newpage
+
+## Part 2: Graphics *(15 points each)*
+
+
+### a. The scatter plot below visualizes the relationship between GDP per capita and life expectancy of countries in the year 2007. What are 5 ways you could improve the aesthetics and readability of this plot by following best data visualization practices? Also write 5 code modifications on the space provided below:
+
+
+```{r, out.width="80%"}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) + 
+  geom_point()
+```
+
+*Answer:*
+
+
+\vspace*{3in}
+
+
+
+```{r, eval=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp, color = continent)) + 
+  geom_point(aes(size = pop)) 
+  
+  
+  
+  
+  
+  
+
+  
+  
+  
+  
+
+
+
+
+  
+    
+```
+
+
+
+
+```{r, echo=FALSE, eval=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot() + 
+  geom_point(aes(x = gdpPercap, y = lifeExp, color = continent), size = 2, alpha = 0.7) +
+  scale_x_log10(labels = scales::dollar_format()) +
+  scale_color_brewer(palette = "Set2", name = "Continent") +
+  labs(title = "GDP per Capita vs Life Expectancy in 2007",
+       subtitle = "Data from Gapminder",
+       x = "GDP per Capita (log scale)",
+       y = "Life Expectancy") +
+  theme_minimal()
+```
+
+
+\newpage
+
+
+
+### b. The partial code used to generate the plot below is given with placeholders for code snippet. Please provide the appropriate code snippet.
+
+```{r, echo=FALSE}
+gapminder %>%
+  mutate(year_date = make_date(year)) %>%
+  filter(year == 2007, continent != "Oceania") %>%
+  group_by(continent) %>%
+  mutate(avg_lifeExp = mean(lifeExp)) %>%
+  ungroup() %>%
+  mutate(continent_reordered = fct_reorder(continent, avg_lifeExp)) %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp, size = pop, color = continent)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "Life Expectancy vs GDP per capita by Continent (2007)",
+       x = "GDP per capita",
+       y = "Life Expectancy") +
+  scale_fill_brewer(palette = "Set1") +
+  scale_x_log10(labels = scales::comma) +
+  facet_wrap(~continent_reordered, ncol = 2) +
+  theme(legend.position = "bottom") 
+```
+
+
+
+```{r, eval=FALSE}
+gapminder %>%
+  ##### FILL IN i. ##### %>%
+  ##### FILL IN ii. ##### %>%
+  group_by(continent) %>%
+  mutate(avg_lifeExp = mean(lifeExp)) %>%
+  ungroup() %>%
+  ##### FILL IN iii. ##### %>%
+  ##### FILL IN iv. ##### +
+  geom_point(alpha = 0.7) +
+  labs(title = "Life Expectancy vs GDP per capita by Continent (2007)",
+       x = "GDP per capita",
+       y = "Life Expectancy") +
+  scale_fill_brewer(palette = "Set1") +
+  scale_x_log10(labels = scales::comma) +
+  ##### FILL IN v. ##### +
+  theme(legend.position = "bottom") 
+```
+
+
+#### i. Create a new column called "year_date" that converts the "year" column into a date object 
+
+\vspace*{1in}
+
+
+#### ii. Filter the data to only include rows where the year is 2007 and exclude continent "Oceania"
+
+\vspace*{1in}
+
+
+#### iii. Reorder the levels of the "continent" factor based on the "avg_lifeExp" column and store the result in a new column called "continent_reordered."
+
+\vspace*{1in}
+
+
+#### iv. Create a ggplot2 scatter plot with "gdpPercap" on the x-axis, "lifeExp" on the y-axis, point sizes representing the "pop" column, and points color-coded by the "continent" column.
+
+
+\vspace*{1in}
+
+
+#### v. Create a faceted plot based on the "continent_reordered" column, with 2 columns of panes.
+
+\vspace*{1in}
+
+
+
+\newpage
+
+## Part 3: Data Objects *(5 points each)*
+
+
+```{r}
+x <- 4:1
+y <- c(TRUE, factor(c(NA, "b")), 1)
+z <- list(z1 = x, z2 = y, z3 = c("Carleton", "college"), z4 = matrix(1:9, nrow = 3))
+```
+
+
+Consider the above objects to tell what each of the following code chunks evaluate to? Briefly explain your answer.
+
+### (a)
+
+
+```{r, eval=FALSE}
+y[3]
+```
+
+
+\vspace*{0.8in}
+
+
+### (b)
+
+
+
+```{r, eval=FALSE}
+z[["z3"]][1]   
+```
+
+\vspace*{0.8in}
+
+
+### (c)
+
+
+```{r, eval=FALSE}
+z[x][[2]][[2]]
+```
+
+\vspace*{0.8in}
+
+
+### (d)
+
+
+```{r, eval=FALSE}
+x - y
+```
+
+\vspace*{1in}
+
+
+\newpage
+
+### (e)
+
+
+```{r, eval=FALSE}
+unlist(z)
+```
+
+\vspace*{2in}
+
+
+### (f)
+
+
+```{r, eval=FALSE}
+typeof(unlist(z))
+```

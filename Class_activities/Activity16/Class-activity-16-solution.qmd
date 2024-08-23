@@ -1,0 +1,224 @@
+---
+title: "Class Activity 16"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      size = "small", 
+                      collapse = TRUE, 
+                      comment = NA, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      error = TRUE)
+
+# load the necessary libraries
+library(tidyverse)
+library(stringr)
+library(purrr)
+library(polite)
+library(rvest)
+```
+
+
+\vspace*{1in}
+
+
+## Group Activity 1
+
+
+```{r}
+url <- 'https://www.imdb.com/search/title/?groups=best_picture_winner&sort=year,desc&count=100&view=advanced'
+webpage <- bow(url) %>% scrape()
+```
+
+
+As seen in the slides, we can extract the movie titles using the `.lister-item-header a` css selector.
+
+```{r}
+title_data <- webpage %>% 
+  html_nodes(css = ".lister-item-header a") %>% 
+  html_text()
+glimpse(title_data)
+```
+
+
+Now, lets scrape other elements of the webpage one by one using the selector gadget tool.
+
+### a. Use the selector gadget tool to find the CSS for extracting year the movie came out. 
+
+- Tidy the data
+  + Using `parse_number()`
+  + Using any regex
+
+
+```{r}
+year_data <- webpage %>% 
+  html_nodes(css = '.text-muted.unbold') %>% 
+  html_text() %>%
+  parse_number()
+
+year_data1 <- webpage %>% 
+  html_nodes(css = '.text-muted.unbold') %>% 
+  str_extract_all("[0-9]+") %>% 
+  unlist() %>% 
+  as.numeric()
+```
+
+
+### b. Next, parse the webpage to produce a vector of the descriptions. Tidy the description by removing unwanted regexes.
+
+
+```{r}
+description_data <- webpage %>% 
+  html_nodes('.ratings-bar+ .text-muted') %>% 
+  html_text() %>% 
+  str_trim()
+head(description_data,3)
+```
+
+### c. Now, parse the runtime data by following similar tools used for extracting year.
+
+```{r}
+runtime_data <- webpage %>% 
+  html_nodes('.runtime') %>% 
+  html_text() %>% 
+  parse_number()
+head(runtime_data)
+```
+
+### d. Do the same for getting the ratings data using an appropriate selector.
+
+```{r}
+rating_data <- webpage %>% 
+  html_nodes('.ratings-imdb-rating') %>% 
+  html_text() %>% 
+  as.numeric()
+```
+
+
+### e. Finally, get the number of votes following similar tools
+
+```{r}
+votes_data <- webpage %>% 
+  html_nodes('.sort-num_votes-visible span:nth-child(2)') %>% 
+  html_text() %>% 
+  parse_number()
+```
+
+We can combine all the information we scraped to produce a nice table that we ca use for further analysis. Please run the following code, once you are done with the prior codes.
+
+
+```{r}
+movies_df <- data.frame(Year = year_data,
+                      Title = title_data,
+                      Description = description_data, 
+                      Runtime = runtime_data,
+                      Rating = rating_data,
+                      Votes = votes_data) %>% as_tibble()
+glimpse(movies_df)
+```
+
+
+-----------------------------------------------------------
+
+## Group Activity 2
+
+### a. Scrape the names, scores, and years of most popular TV shows on IMDB:
+[www.imdb.com/chart/tvmeter](http://www.imdb.com/chart/tvmeter). Create a data frame called `tvshows` with four variables 
+(`rank`, `name`, `score`, `year`)  
+
+Note: 
+
+It's easier to use the `SelectorGadget` and choose the CSS selectors wisely. Otherwise, you'll have more cleaning to do after scraping.
+
+
+```{r}
+page <- read_html("http://www.imdb.com/chart/tvmeter")
+name <- page %>%
+  html_nodes(".titleColumn") %>%
+  html_text() %>%  str_squish() %>% 
+  str_extract_all("[:alpha:]{2,}")
+
+ranks <- page %>%
+  html_nodes(".velocity") %>%
+  html_text() %>%
+  str_extract("\\d+") %>%
+  as.numeric()
+
+scores <-  page %>%
+  html_nodes(".imdbRating") %>%
+  html_text() %>%
+  str_extract("\\d+.\\d+") %>%
+  as.numeric()
+
+# If you don't use the gadget selector carefully, 
+# more string manipulation is needed here
+
+years <- page %>%
+  html_nodes("a+ .secondaryInfo") %>%
+  html_text() %>%
+  str_extract("\\d+") %>%
+  as.numeric()
+```
+
+
+```{r}
+tvshows <- tibble(
+  rank = ranks,
+  name = name,
+  score = scores,
+  year = years
+)
+
+tvshows
+```
+
+-----------------------------------------------------------
+
+## Group Activity 3
+
+
+### a. Scrape the first table in `List_of_NASA_missions` wiki page. Additionally, use `janitor::clean_names()` to clean the column names and store the resulting table as `NASA_missions.csv` in your working folder.
+
+```{r}
+# extract data from 
+# the first table on the page
+wiki_NASA <- "https://en.wikipedia.org/wiki/List_of_NASA_missions"
+NASA_missions <- bow(wiki_NASA) %>%scrape() %>% 
+  html_nodes("table") %>% 
+  .[[1]] %>% 
+  html_table() %>% 
+  janitor::clean_names()
+```
+
+
+```{r, eval=FALSE}
+# Exporting data to CSV
+readr::write_csv(NASA_missions, "NASA_missions.csv")
+```
+
+### b. Now, write a code snippet to scrape all the URLs from the anchor tags (<a>) on a given Wikipedia page, convert the relative URLs to absolute URLs, and store the results in a tibble and save it as `websites.csv` in your working folder.
+
+
+```{r}
+# extract URLs
+websites <-  bow(wiki_NASA) %>% scrape() %>% 
+  html_nodes("a") %>%
+  html_attr("href") %>% 
+  url_absolute("https://en.wikipedia.org/") 
+```
+
+
+
+```{r, eval=FALSE}
+# Exporting data to CSV
+readr::write_csv(websites, "websites.csv")
+```
+
+

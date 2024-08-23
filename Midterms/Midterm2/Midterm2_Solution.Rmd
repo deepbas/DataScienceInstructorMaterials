@@ -1,0 +1,244 @@
+---
+title: "Midterm II"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, warning = FALSE, 
+                      message=FALSE, include=TRUE, 
+                      fig.height = 4, fig.width = 5, error = TRUE)
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(forcats)
+library(stringr)
+library(lubridate)
+
+# prepare datasets
+
+library(datasets)
+mydata <- as.data.frame(matrix(ldeaths, nrow = 6))
+colnames(mydata) <- str_to_lower(month(1:12, label = TRUE))
+mydata <- mydata %>% tibble() %>% mutate(year = seq(1974, 1979)) %>% relocate(year, .before = jan)
+```
+
+
+## Your name: 
+
+\vspace*{1in}
+
+# Questions
+
+
+
+## Q1 
+
+Given below are the monthly deaths from bronchitis, emphysema and asthma in the UK from 1974 to 1979.
+
+```{r}
+knitr::kable(mydata)
+```
+
+
+### a. 
+
+Write a for loop that will return a vector of the ratio of the mean value to the median value for columns 2-13 in `mydata` (shown above).
+
+
+```{r}
+store_ratio <- rep(NA, 12)
+for (i in 1:12){
+  store_ratio[i] <- mean(mydata[[i+1]])/median(mydata[[i+1]])
+}
+store_ratio
+```
+
+
+### b.  
+
+Describe what is returned by the code below, including the type of R object produced, the length or dimension of the object, and the information contained in the object.
+
+```{r}
+map_dbl(mydata %>% select(-1), mean) %>% mean()
+```
+
+
+### c. 
+
+Describe what is returned by the code below, including the type of R object produced, the length or dimension of the object, and the information contained in the object.
+
+
+```{r}
+ratio_fun <- function(x) quantile(x, probs= c(0.25, 0.5, 0.75))
+map_dfr(mydata %>% select(-1), ratio_fun, .id = "month")
+```
+
+
+### d. 
+
+Describe what is returned by the code below, including the type of R object produced, the length or dimension of the object, and the information contained in the object.
+
+```{r}
+map_dfc(mydata %>% select(-1), ratio_fun)
+```
+
+
+### e. 
+
+Describe what is returned by the code below, including the type of R object produced, the length or dimension of the object, and the information contained in the object.
+
+```{r}
+lapply(mydata %>% select(-1), ratio_fun) %>%  unlist()
+```
+
+
+### f.  
+
+Describe what is done by the code below. What type of R object is `mydata_long`? What is the length or dimension of the `mydata_long`? 
+
+
+```{r}
+mydata_long <- mydata %>% pivot_longer(cols = 2:13,
+                       names_to = "months",
+                       values_to = "deaths") 
+```
+
+
+
+### g. 
+
+Write a function that takes the data object from `f` and year as an argument and returns the median deaths for that particular year. Additionally, your function should give a warning if the user enters a year that  not in the dataset. 
+
+
+```{r}
+iqr_func <- function(data, year){
+  if (year >= 1974 & year <= 1979){
+    median(data %>% filter(year == year))
+  } else {"Please enter a year from 1974 to 1979"}
+}
+iqr_func(mydata_long, 1975)
+```
+
+
+
+## Q2
+
+### a. 
+
+Consider the function below. Give the output produced by `myfun(3)` and explain how you arrived at your answer.
+
+```{r}
+myfun <- function(x) {
+  if (x < 3 | x > 3){
+  rep("hi", x)
+  } else{
+  rep("bye", x)
+  }
+}
+```
+
+
+
+## Q3 
+
+Consider the following data frames for this question.
+
+```{r}
+df1 = data.frame(Id = c(1:6), Item = c(rep("Lake1", 3), rep("Lake2", 3)))
+df2 = data.frame(Id = c(1, 3, 5), PH = c(rep("Acidic", 2), rep("basic", 1)))
+df1
+df2
+```
+
+What do the following codes do? Provide a sketch of the resulting data frame.
+
+### a.
+
+
+```{r}
+semi_join(df1, df2)
+```
+
+
+### b.
+
+
+```{r}
+right_join(df1, df2)
+```
+
+
+### c.
+
+
+```{r}
+full_join(df1, df2)
+```
+
+
+
+## Q4
+
+Consider the following string:
+
+```{r}
+my_string <- "A 5.1 magnitude earthquake strikes near San Jose, US Geological Survey 10 reports"
+```
+
+
+```{r}
+str_subset(c("A", "5.1"), "[^\\d]")
+```
+
+
+### a.
+
+Carefully explain what `str_view_all` will highlight in `x` for the given pattern.
+
+
+```{r, eval=FALSE}
+pattern <- "[\\d?.\\d]"
+str_view_all(my_string, pattern)
+```
+
+
+### b.
+
+Explain how you would use regular expression to count the number of words in x. Include the actual commands you would need to accomplish this task.
+
+```{r}
+str_replace_all(my_string, pattern = "[\\d?.\\d]", "") %>% 
+  str_extract_all(pattern = "\\w+") %>%  
+  unlist() %>%  
+  length()
+```
+
+
+### c. 
+
+Carefully explain what does the following code chunk will do.
+
+```{r}
+pattern <- "[\\d+]"
+str_replace_all(my_string, pattern, "X")
+```
+
+
+### d.
+
+Suppose you want to place a periods at the end of the `my_string`. The replacement attempt below contains one mistake. Write down the correct command that can place a periods at the end of `my_string`.
+
+```{r}
+pattern <- "$"
+str_replace_all(my_string, pattern, ".")
+```
+
+
+
+

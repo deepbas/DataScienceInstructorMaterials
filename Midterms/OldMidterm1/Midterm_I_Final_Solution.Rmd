@@ -1,0 +1,298 @@
+---
+title: "Midterm I"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(comment=NA, fig.align = 'center')
+knitr::opts_chunk$set(echo = TRUE, size = "small", collapse=TRUE, comment=NA, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(gapminder)
+library(ggthemes)
+data("gapminder")
+select <- dplyr::select
+theme_set(theme_stata(base_size = 10))
+```
+
+
+Section I: Gapminder Data
+
+Health and income outcomes for 142 countries from 1952 to 2007 in increments of 5 years. The variables in the dataset are `country`, `continent`, `year`, `lifeExp`, `pop`, and `gdpPercap`. The descriptions for the variables are:
+
+  - `country` : name of the country, factor with 142 levels
+  - `continent`: name of the continent, factor with 5 levels
+  - `year` : ranges from 1952 to 2007 in increments of 5 years (12 distinct years)
+  - `lifeExp`: life expectancy at birth, in years
+  - `pop` : population
+  - `gdpPercap` : GDP per capita (US$\$$, inflation-adjusted)
+
+
+```{r}
+glimpse(gapminder)
+```
+
+
+
+## Part 1: What do the following codes do?
+
+Provide a thorough and intuitive (2-3 sentences) description of the output from each of the following R chunks. The chunks either produce a new data set or a new plot; if it's a new data set, give the dimensions in addition to your description.  Write your descriptions in regular English, without using variable names.
+
+
+### a.
+
+```{r, eval=FALSE}
+gapminder %>%
+  filter(
+    continent == "Africa",
+    country == "Somalia",
+     year %in% seq(1952, 2007, 5)) %>%
+ slice_min(lifeExp, n=1)
+```
+
+
+```{r}
+gapminder %>%
+  filter(
+    continent == "Africa",
+    country == "Somalia",
+     year %in% seq(1952, 2007, 5)) %>%
+ slice_min(lifeExp, n=1)
+```
+
+
+### b.
+
+```{r, echo=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  group_by(continent) %>%
+  summarise(totalPop = sum(pop)) %>%
+  arrange(totalPop)
+```
+
+
+```{r}
+gapminder %>%
+  filter(year == 2007) %>%
+  group_by(continent) %>%
+  summarise(totalPop = sum(pop)) %>%
+  arrange(totalPop)
+```
+
+### c. 
+
+
+```{r}
+gapminder %>%
+group_by(country, continent) %>%
+summarize(meanPop = mean(pop)/1000000, meanLifeExp = mean(lifeExp)) %>%
+  filter(continent == "Europe") %>%
+ggplot(aes(x = meanPop, y = meanLifeExp, color = country, label = country)) +
+  geom_point() +
+  scale_color_discrete(guide = "none") +
+  ggrepel::geom_text_repel()
+```
+
+
+```{r, eval=FALSE}
+gapminder %>%
+group_by(country, continent) %>%
+summarize(meanPop = mean(pop)/1000000, meanLifeExp = mean(lifeExp)) %>%
+  filter(continent == "Europe") %>%
+ggplot(aes(x = meanPop, y = meanLifeExp, color = country, label = country)) +
+  geom_point() +
+  scale_color_discrete(guide = "none") +
+  ggrepel::geom_text_repel()
+```
+
+### d.
+
+```{r}
+gapminder %>%
+  filter(year == 2007) %>%
+  mutate(rank = min_rank(desc(lifeExp))) %>%
+  filter(rank < 50) %>%
+  arrange(rank) %>%
+  slice_min(rank, n = 10) %>%
+  select(-continent, -pop, -year, -gdpPercap)
+```
+
+
+```{r, eval=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  mutate(rank = min_rank(desc(lifeExp))) %>%
+  filter(rank < 50) %>%
+  arrange(rank) %>%
+  slice_min(rank, n = 10) %>%
+  select(-continent, -pop, -year, -gdpPercap)
+```
+
+### e. 
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>%
+  summarize(
+      mean_le = mean(lifeExp),
+      median_le = quantile(lifeExp, 0.50),
+      min_le = min(lifeExp),
+      max_le = max(lifeExp),
+      se_le = sd(lifeExp)/sqrt(n()))%>%
+ slice_max(mean_le, n=1) %>%
+ ungroup()
+```
+
+
+```{r, eval=FALSE}
+gapminder %>% 
+  group_by(continent, year) %>%
+  summarize(
+      mean_le = mean(lifeExp),
+      median_le = quantile(lifeExp, 0.50),
+      min_le = min(lifeExp),
+      max_le = max(lifeExp),
+      se_le = sd(lifeExp)/sqrt(n()))%>%
+ slice_max(mean_le, n=1) %>%
+ ungroup()
+```
+
+
+## Part 2: Miscellaneous
+
+
+### a. Use piping operation to combine the following set of codes into one chained line of code to produce the same output.
+
+```{r}
+arrange(filter(gapminder, year == 1952), desc(gdpPercap))
+```
+
+
+```{r, echo=FALSE}
+gapminder %>%
+  filter(year == 1952) %>%
+  arrange(desc(gdpPercap))
+```
+
+
+### b.  Use piping operation to combine the following set of codes into one chained line of code to produce the same output. Also, comment on the output of the code.
+
+
+```{r, eval=FALSE}
+plot_data <- filter(gapminder, year == 1972 & continent %in% c("Africa", "Americas"))
+ggplot(plot_data, aes(x = lifeExp, y = gdpPercap)) +
+  geom_point() 
+```
+
+
+```{r}
+gapminder %>% filter(year == 1972 & continent %in% c("Africa", "Americas")) %>%
+  ggplot(aes(x = lifeExp, y = gdpPercap, color = continent)) +
+  geom_point(aes(color = continent, size = pop)) +
+  geom_smooth(se=FALSE)
+```
+
+
+
+### c. How would you improve the aesthetics of the plot below? Write your code modifications.
+
+```{r}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot() + 
+  geom_point(aes(x = gdpPercap, y = lifeExp, size = pop, 
+                 color = continent))
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot() + 
+  geom_point(aes(x = gdpPercap, y = lifeExp, size = pop, 
+                 color = continent))
+```
+
+
+### d. 
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>%
+  summarize(life_expectancy = lifeExp) %>%
+  ggplot(aes(x = continent, y=life_expectancy, color = continent)) +
+  geom_boxplot() 
+```
+
+
+
+
+\vspace*{1in}
+
+## Part 3. Consider the following objects to answer the questions below. 
+
+```{r}
+x <- 1:4
+y <- c(TRUE, as.factor(c(2,"3")), 4)
+z <- list(z1 = x, z2 = y, z3 = c("cellar","door"))
+```
+
+
+#### (a)
+
+Consider the objects x, y and z. Which are atomic vectors and which are lists?
+
+*Answer:* 
+
+\vspace*{1in}
+
+
+#### (b)
+
+What does the following command evaluate to? Briefly explain your answer.
+
+```{r, eval = FALSE}
+typeof(x)  # line 1
+typeof(y) # line 2
+```
+
+*Answer:* 
+
+\vspace*{1in}
+
+
+#### (c)
+
+What does the following command evaluate to? Briefly explain your answer.
+
+```{r, eval=FALSE}
+z[["z3"]][1]   
+```
+
+*Answer:* 
+
+
+
+#### (d)
+
+What does the following command evaluate to? Briefly explain your answer.
+
+```{r, eval=FALSE}
+z[3][[1]][2]    
+```
+
+*Answer:* 
+
+
+#### (e)
+
+What does the following command evaluate to? Briefly explain your answer.
+
+```{r, eval=FALSE}
+x + y
+```
+
+*Answer:* 
+

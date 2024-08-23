@@ -1,0 +1,116 @@
+---
+title: "Homework 2"
+output: pdf_document
+---
+
+## Name: Put your name here
+
+## I worked with: 
+
+**Click the "Knit" button in RStudio to knit this file to a pdf.**
+
+--------------------------------------------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, 
+                      warning = FALSE, message = FALSE)
+# add packages here 
+```
+
+
+
+## Problem 1: Spot the error
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+----------------------------------
+
+## Problem 2: Penguins
+
+### a. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### c. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+### d. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+----------------------------------
+
+## Problem 3: Storm paths by year
+
+### a. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+
+-------------------------
+
+## Problem 4:  explain command (no R needed)
+
+
+### a. 
+
+*answer:* write your answer here and your Markdown table below
+
+### b. 
+
+*answer:* write your answer here and your Markdown table below
+
+### c. 
+
+*answer:* write your answer here and your Markdown table below
+
+### d. 
+
+*answer:* write your answer here and your Markdown table below
+
+### e. 
+
+*answer:* write your answer here and your Markdown table below
+
+

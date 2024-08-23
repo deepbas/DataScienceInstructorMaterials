@@ -1,0 +1,128 @@
+---
+title: "Class Activity 1"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+format: pdf
+execute: 
+  eval: true
+  echo: true
+  warning: false
+  error: true
+---
+
+The `R` package `babynames` provides data about the popularity of individual baby names from the US Social Security Administration. Data includes all names used at least 5 times in a year beginning in 1880.
+
+```{r}
+#install.packages("babynames")  # uncomment to install
+library(babynames)
+```
+
+Below is the list for first few cases of baby names.
+
+```{r}
+head(babynames)
+```
+
+
+1. How many cases and variables are in the dataset `babynames`?
+
+**Answer:** 
+
+To determine the number of cases (rows) and variables (columns) in the dataset, we can use the dim() function, which returns the dimensions of the dataset.
+
+
+```{r}
+dim(babynames)
+```
+
+There are 2,020,863 cases (rows) and 5 variables (columns) in the dataset babynames.
+
+
+
+\vspace*{0.2in}
+
+Let's use the package tidyverse to do some exploratory data analysis.
+
+```{r}
+#install.packages("tidyverse")   # uncomment to install
+library(tidyverse)
+babynames %>% filter(name=='Aimee')
+
+filtered_names <- babynames %>% filter(name=='Aimee')
+```
+
+
+```{r}
+#install.packages("ggplot2")   # uncomment to install
+library(ggplot2)
+```
+
+
+```{r trend, fig.cap= "A trend chart", tidy=FALSE}
+ggplot(data=filtered_names, aes(x=year, y=prop)) + 
+  geom_line(aes(colour=sex)) + 
+  xlab('Year') + 
+  ylab('Prop. of Babies Named Aimee')
+```
+
+2. What do you see in the Figure 1? Explain in a few sentences.
+
+**Answer:**
+
+Figure 1 shows the trend of the proportion of babies named Aimee over the years, separated by sex. We can observe that the name Aimee was more popular for girls compared to boys throughout the years. The name's popularity increased from the early 1900s, reaching its peak around the 1970s, and then declined. The proportion of boys named Aimee remained consistently low across the years.
+
+\vspace*{0.2in}
+
+
+
+3. Repeat question 2 to infer how does the proportion of babies with your first name trends over time.
+
+**Answer:**
+
+Replace "YourName" with your actual first name in the code below:
+
+
+```{r}
+# Your R-code
+your_name <- "Yourname"
+your_name_data <- babynames %>% filter(name == your_name)
+
+ggplot(data=your_name_data, aes(x=year, y=prop)) +
+  geom_line(aes(colour=sex)) +
+  xlab('Year') +
+  ylab(paste0('Prop. of Babies Named ', your_name))
+
+```
+
+Examine the generated plot and describe the trend of your name's popularity over time. Consider the following points:
+
+Has the popularity of your name increased, decreased, or remained stable over the years? Is there a noticeable difference in popularity between sexes? Are there any interesting patterns or trends, such as sudden increases or decreases in popularity?
+
+
+```{r}
+set.seed(123) # Set a seed for reproducibility
+random_name <- sample(unique(babynames$name), 1)
+random_name
+```
+
+
+Now, replace 'YourName' with your first name and 'RandomName' with the randomly chosen name from the previous code:
+
+```{r}
+your_name_data <- babynames %>% filter(name == 'YourName')
+random_name_data <- babynames %>% filter(name == 'RandomName')
+
+combined_data <- bind_rows(your_name_data, random_name_data)
+
+ggplot(data=combined_data, aes(x=year, y=prop)) + 
+  geom_line(aes(colour=sex, linetype=name)) + 
+  xlab('Year') + 
+  ylab('Proportion of Babies Named') +
+  theme_minimal() +
+  facet_wrap(~name, scales = "free_y")
+```
+
+
+Examine the generated plot and compare the popularity of your first name with the randomly chosen name. Consider the following points:
+
+Are there differences in popularity trends between the two names? Is one name consistently more popular than the other, or do their popularity levels change over time? Are there any interesting patterns or trends in the data, such as periods of rapid increase or decrease in popularity?

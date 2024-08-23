@@ -1,0 +1,249 @@
+---
+title: "Class Activity 21"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      size = "small", 
+                      collapse = TRUE, 
+                      comment = NA, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      error = TRUE) # change it to TRUE
+
+# load the necessary libraries
+library(tidyverse)
+library(ggthemes)
+library(rvest)
+library(polite)
+library(lubridate)
+library(leaflet)
+library(ggiraph)
+library(shiny)
+library(sp)
+library(maptools)
+library(rgeos)
+```
+
+
+\vspace*{1in}
+
+## Group Activity 1
+
+### a. Simple demo with `leaflet`
+
+```{r}
+table_usafacts <- bow(url = "https://usafacts.org/visualizations/coronavirus-covid-19-spread-map/state/minnesota") %>% scrape() %>% html_elements(css = "table") %>% html_table()
+
+covidMN <- table_usafacts[[2]]
+
+# tidy it up
+covidMN_final <- covidMN %>% janitor::clean_names() %>%
+  mutate(cases = as.numeric(str_remove(cases, ","))) %>%
+  mutate(deaths = as.numeric(str_remove(deaths, ","))) %>%
+  mutate(county = str_remove(county, " County"))
+
+# leaflet
+MNcounty <- maps::map("county","Minnesota", plot=FALSE, fill=TRUE)
+MNmap <- map2SpatialPolygons(MNcounty, IDs = MNcounty$names)
+map <- SpatialPolygonsDataFrame(MNmap, covidMN_final, match.ID = FALSE)
+
+#pal <- colorNumeric(palette = "viridis", alpha = TRUE, domain = map$cases)
+
+bins <- c(0, 1000, 5000, 10000, 100000, Inf)
+pal <- colorBin("viridis", domain = map$cases, bins = bins)
+
+labels <- sprintf("<strong> %s </strong> <br/> Observed: %s", map$county, map$cases) %>%
+  lapply(htmltools::HTML)
+
+l <- leaflet(map) %>% addTiles() %>% setView(lng = -93.1616, lat = 44.4583, zoom = 5) 
+
+l <- l %>% addPolygons(color = "grey", weight = 1,
+                  fillColor = ~pal(cases), fillOpacity = 0.7,
+                  highlightOptions = highlightOptions(weight = 5),
+                  label = labels) %>%
+                  addLegend(pal = pal, values = ~cases, opacity = 0.5, 
+                            title = "Observed Cases", 
+                            position = "bottomright")
+l
+```
+
+### b. More with `leaflet`
+
+```{r}
+# United States
+l <- leaflet() %>% addTiles() %>% setView(-96, 37.8, 4) 
+
+reg <- "(?=:).+"
+str_remove("sdf:df", reg)
+
+table_usafacts <- bow(url = "https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota") %>%
+  scrape() %>% html_elements(css = "table") %>% html_table()
+
+covid <- table_usafacts[[1]]
+
+# Clean the data
+
+covid_final <- covid %>% janitor::clean_names() %>%
+  mutate_at(2:4, parse_number) %>% mutate(state = str_to_lower(state))%>%
+  filter(state %in% c("minnesota", "wisconsin", "iowa", "michigan", "illinois", "indiana"))
+
+USA <- maps::map("state", regions = c("minnesota", "wisconsin", "iowa", "michigan", "illinois","indiana"), plot = FALSE, fill=TRUE)
+USA$names <- str_remove(USA$names, reg)
+Regionmap <- map2SpatialPolygons(USA, IDs = USA$names)
+map <- SpatialPolygonsDataFrame(Regionmap, covid_final, match.ID = FALSE)
+
+bins <- seq(min(map$percent_fully_vaccinated), max(map$percent_fully_vaccinated), length.out = 6)
+pal <- colorBin("viridis", domain = map$percent_fully_vaccinated, bins = bins)
+
+labels <- sprintf("<strong> %s </strong> <br/> Observed: %s", str_to_upper(map$state), map$percent_fully_vaccinated) %>%
+  lapply(htmltools::HTML)
+
+
+m <- leaflet(map) %>% addTiles() %>% setView(lng = -93.1616, lat = 44.4583, zoom = 4)
+
+n <- m %>% addPolygons(color = "grey", weight = 1,
+                  fillColor = ~pal(percent_fully_vaccinated), fillOpacity = 0.7,
+                  highlightOptions = highlightOptions(weight = 5),
+                  label = labels) %>%
+                  addLegend(pal = pal, values = ~percent_fully_vaccinated, opacity = 0.5, 
+                            title = "Percent Vaccn.", 
+                            position = "bottomright")
+
+n
+```
+
+
+### c. Repeat the above for projecting the `percent_of_population_with_at_least_one_dose` accross the same midwestern US states.
+
+
+```{r}
+# your r-code
+bins <- seq(min(map$percent_of_population_with_at_least_one_dose), max(map$percent_of_population_with_at_least_one_dose), length.out = 6)
+pal <- colorBin("viridis", domain = map$percent_of_population_with_at_least_one_dose, bins = bins)
+
+labels <- sprintf("<strong> %s </strong> <br/> Observed: %s", str_to_upper(map$state), map$percent_of_population_with_at_least_one_dose) %>% lapply(htmltools::HTML)
+
+
+m <- leaflet(map) %>% addTiles() %>% setView(lng = -93.1616, lat = 44.4583, zoom = 4)
+
+n <- m %>% addPolygons(color = "grey", weight = 1,
+                  fillColor = ~pal(percent_of_population_with_at_least_one_dose), fillOpacity = 0.7,
+                  highlightOptions = highlightOptions(weight = 5),
+                  label = labels) %>%
+                  addLegend(pal = pal, values = ~percent_of_population_with_at_least_one_dose, opacity = 0.5, 
+                            title = "Percent Vaccn.", 
+                            position = "bottomright")
+
+n
+
+```
+
+
+----------------------------------------------------------------------------------------------
+
+## Group Activity 2
+
+### a. Use the `covid_final` data from Group Activity 1b to produce an interactive leaflet map. Incorporate the map into a Shiny app that asks the user for a variable to plot and outputs the leaflet map.
+
+```{r}
+ui <- fluidPage(
+  titlePanel("COVID Vaccination Map"),
+  sidebarLayout(
+    sidebarPanel(radioButtons("variable", "What to project",
+                  choices = names(map)[2:4],
+                  selected = names(map)[2])),
+    
+    mainPanel(leafletOutput("mymap"))
+)
+)
+
+server <- function(input, output, session) {
+    output$mymap <- renderLeaflet({
+       Regionmap <- map2SpatialPolygons(USA, IDs = USA$names)
+       map <- SpatialPolygonsDataFrame(Regionmap, covid_final, match.ID = FALSE)
+
+       
+       pal <- colorNumeric(palette = "RdYlBu", domain = map[[input$variable]])
+       bins <- seq(min(map[[input$variable]]), max(map[[input$variable]]), length.out = 6)
+       pal <- colorBin("viridis", domain = map[[input$variable]], bins = bins)
+      
+       labels <- sprintf("<strong> %s </strong> <br/> Vaccination Percentage: %s", str_to_upper(map$state), map[[input$variable]]) %>% lapply(htmltools::HTML)
+
+       m <- leaflet(map) %>% addTiles() %>% setView(lng = -93.1616, lat = 44.4583, zoom = 4) %>% addPolygons(color = "grey", weight = 1,
+                  fillColor = ~pal(map[[input$variable]]), fillOpacity = 0.7,
+                  highlightOptions = highlightOptions(weight = 5),
+                  label = labels) %>%
+                  addLegend(pal = pal, values = ~map[[input$variable]], opacity = 0.5, 
+                            title = "Percent Vaccination", 
+                            position = "bottomright")
+      })
+}    
+
+shinyApp(ui = ui, server = server)
+```
+
+
+### b. Use the `covidMN_final` data from Group Activity 1a to produce an interactive leaflet map. Incorporate the map into a Shiny app that asks the user for a variable to plot and outputs the leaflet map.
+
+
+```{r}
+ui <- fluidPage(
+  titlePanel("Map of Minnesota Counties"),
+  sidebarLayout(
+    sidebarPanel(radioButtons("myvar", "What to plot?",
+                              choices = c("deaths", "cases"))),
+                 
+    mainPanel(
+      leafletOutput("mymap")
+    )
+  )
+)
+
+
+server <- function(input, output, session){
+  data_filtered <- reactive({covidMN_final %>%  select(county, input$myvar)})
+  output$mymap <- renderLeaflet({
+    MNmap <- maps::map("county", "Minnesota", plot = FALSE, fill = TRUE)
+    MNpolygons <- maptools::map2SpatialPolygons(MNmap,  IDs = MNmap$names)
+    map <- SpatialPolygonsDataFrame(MNpolygons, data_filtered(), match.ID = FALSE)
+    bins <- seq(min(map[[input$myvar]]), max(map[[input$myvar]]), length.out = 6)
+    pal <- colorBin("viridis", domain = map[[input$myvar]], bins = bins)
+    
+    labels <- sprintf("<strong> %s </strong> <br/> Number of <strong> %s </strong>: %s", 
+                      str_to_upper(map$county), input$myvar, map[[input$myvar]]) %>% lapply(htmltools::HTML)
+    
+    m <- leaflet(map) %>% addTiles() %>% setView(lng = -93.1616, lat = 44.4583, zoom = 5)
+    m %>% 
+      addPolygons(color = "grey", weight = 1,
+                  fillColor = ~pal(map[[input$myvar]]), fillOpacity = 0.7,
+                  highlightOptions = highlightOptions(weight = 5),
+                  label = labels) %>%
+      addLegend(pal = pal, values = ~map[[input$myvar]], opacity = 0.5, 
+                title = str_glue("Number of ", {input$myvar}), 
+                position = "bottomleft")
+    
+    
+  })
+  
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+
+
+
+### c. Open an account on [shinyapps.io](https://www.shinyapps.io/admin/#/dashboard) and follow the steps to deploy one of the apps to [shinyapps.io](https://www.shinyapps.io/admin/#/dashboard).
+
+
+
+
+
+
+

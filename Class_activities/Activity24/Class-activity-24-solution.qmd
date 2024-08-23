@@ -1,0 +1,127 @@
+---
+title: "Class Activity 25"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      size = "small", 
+                      collapse = TRUE, 
+                      comment = NA, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      error = TRUE) # change it to TRUE
+
+# load the necessary libraries
+library(tidyverse) 
+library(ggthemes)
+library(factoextra)
+library(janitor)
+library(broom)
+
+select <- dplyr::select
+theme_set(theme_stata(base_size = 10))
+
+
+standardize <- function(x, na.rm = FALSE) {
+  (x - mean(x, na.rm = na.rm)) / sd(x, na.rm = na.rm)
+}
+```
+
+
+\vspace*{1in}
+
+
+## Group Activity 1
+
+Let's look at the following data tibble that randomly creates some `x-` and `y-` coordinates around the cluster centroids that we just saw in class. Please answer the questions based on this data.
+
+
+```{r}
+set.seed(1234)
+
+my_df <- tibble(
+  X1 = rnorm(n = 120, mean = rep(c(2, 4, 7.33), each = 40)),
+  X2 = rnorm(n = 120, mean = rep(c(6.33, 3, 6), each = 40))
+)
+
+my_df %>%
+  ggplot(aes(X1, X2)) +
+  geom_point() 
+```
+
+
+a. How many clusters can you identify in the data?
+
+*Answer:*
+
+
+b. Fit `kmeans` algorithm to the data picking the number of clusters you previously identified in part `a`.
+
+```{r}
+set.seed(1234)
+res_kmeans <- kmeans(my_df, centers = 3, nstart = 25)
+```
+
+
+c.  Add the cluster association to the dataset and make a scatter plot color-coded by the cluster association.
+
+```{r}
+augment(res_kmeans, data = my_df) %>%
+  ggplot(aes(X1, X2, color = .cluster)) +
+  geom_point()
+```
+
+d. Repeat parts `b-c` for identifying more number of clusters than what you picked in part a.
+
+```{r}
+set.seed(1234)
+res_kmeans <- kmeans(my_df, centers = 5, nstart = 25)
+```
+
+
+```{r}
+augment(res_kmeans, data = my_df) %>%
+  ggplot(aes(X1, X2, color = .cluster)) +
+  geom_point()
+```
+
+
+## Group Activity 2a
+
+a. Aggregate the total within sum of squares for each k to the data table `multi_kmeans`.
+
+```{r}
+multi_kmeans <- tibble(k = 1:10) %>%
+  mutate(
+    model = purrr::map(k, ~ kmeans(my_df, centers = .x, nstart = 25)),
+    tot.withinss = purrr::map_dbl(model, ~ glance(.x)$tot.withinss)
+  )
+```
+
+
+b. Make an elbow plot modifying the code below:
+
+```{r}
+multi_kmeans %>%
+  ggplot(aes(k, tot.withinss)) +
+  geom_point() +
+  geom_line()+
+  scale_x_continuous(breaks = 1:15) 
+```
+
+
+c. After picking an optimal number of cluster, use the in-built function in the `factoextra` package to construct the final cluster plot.
+
+
+```{r}
+set.seed(1234)
+kmeans.final <- kmeans(my_df, 5, nstart = 25)
+fviz_cluster(kmeans.final, data = my_df, ggtheme = theme_stata())
+```
+

@@ -1,0 +1,15 @@
+{
+  "hash": "de5c649fdfa6fb06444b189f34db674d",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Class Activity 17\"\nauthor: \"Your name here\"\ndate: \" May 03 2024\"\nformat:\n  pdf: default\n  html:\n    df_print: paged\neditor: visual\nexecute: \n  eval: true\n  echo: true\n  warning: false\n  error: true\n---\n\n\n\n\n\n\n\n\\vspace*{1in}\n\n\n## Group Activity 1\n\n1. Go to the [the numbers webpage](https://www.the-numbers.com/movie/budgets/all) and extract the table on the front page.\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nsession1 <- bow(url = \"https://www.the-numbers.com/movie/budgets/all\") %>% scrape() %>%\n  \n```\n\n::: {.cell-output .cell-output-error}\n\n```\nError: <text>:4:0: unexpected end of input\n2:   \n3: \n  ^\n```\n\n\n:::\n:::\n\n\n\n\n\n2. Find out the number of pages that contain the movie table, while looking for the changes in the url in the address bar. How does the url changes when you go to the next page?\n\n*Answer:* \n\n\n3. Write a for loop to store all the data in multiple pages to a single data frame. Also, do the same using `purrr::map_df `.\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nlibrary(tidyverse)\nlibrary(rvest)\n\nnew_urls <- \"https://www.the-numbers.com/movie/budgets/all/\"\n\n# Create an empty list\ndf1 <- list()\n\n# Generate a vector of indices\nindex <- seq(1, 6301, 100)\n```\n:::\n\n\n\n\n\n\n## Group Activity 2\n\n1. Go to [scrapethissite](https://www.scrapethissite.com/pages/forms/) and extract the table on the front page.\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nsession1 <- read_html(\"https://www.scrapethissite.com/pages/forms/\") \n```\n:::\n\n\n\n\n\n2. Find out the number of pages that contain the movie table, while looking for the changes in the url in the address bar. How does the url changes when you go to the next page?\n\n\n\n3. Write a for loop to store all the data in multiple pages to a single data frame. Also, do the same using `purrr::map_df `.\n\n\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": null,
+    "postProcess": false
+  }
+}

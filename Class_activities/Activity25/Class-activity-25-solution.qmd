@@ -1,0 +1,253 @@
+---
+title: "Class Activity 25"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      size = "small", 
+                      collapse = TRUE, 
+                      comment = NA, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      error = TRUE) # change it to TRUE
+
+# load the necessary libraries
+library(tidyverse) 
+library(tidymodels)
+library(mlbench)     # for PimaIndiansDiabetes2 dataset
+library(yardstick) # extra package for getting metrics
+library(parsnip) # tidy interface to models
+library(ggthemes)
+library(vip)
+library(ISLR)
+library(rpart.plot)
+library(janitor)
+library(ranger)
+
+theme_set(theme_stata(base_size = 10))
+
+select <- dplyr::select
+
+fire <- read_csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/Algeriafires.csv")
+fire <- fire %>% clean_names() %>% 
+  drop_na() %>% 
+  mutate_at(c(10,13), as.numeric) %>%
+  mutate(classes = as.factor(classes)) %>%
+  select(-year, -day, -month)
+```
+
+
+\vspace*{1in}
+
+
+## Group Activity 1
+
+Use the `fire` data set and predict fire using all available predictor variables.
+
+a. Split the dataset into training and test set by the proportion $80$ to $20$, create a 10 fold cross validation object, and a recipe t0 preprocess the data.
+
+
+```{r}
+set.seed(314) # Remember to always set your seed.
+
+fire_split <- initial_split(fire, prop = 0.80,  strata = classes)
+
+fire_train <- fire_split %>% training()
+fire_test <- fire_split %>% testing()
+
+# Create folds for cross validation on the training data set
+
+fire_folds <- vfold_cv(fire_train, v = 10, strata = classes)
+
+fire_recipe <- recipe(classes ~ ., data = fire_train) %>%
+ step_dummy(all_nominal(), -all_outcomes()) %>%
+ prep()
+
+```
+
+
+b. Specify a decision tree classification model with `rpart` computational engine. Prepare the model for tuning (i.e., fitting with a range of parameters for validation purposes).
+
+```{r}
+tree_model <- decision_tree(cost_complexity = tune(),
+                            tree_depth = tune(),
+                            min_n = tune()) %>% 
+              set_engine('rpart') %>% 
+              set_mode('classification')
+```
+
+c. Combine the model and recipe into a workflow to easily manage the model-building process.
+
+```{r}
+tree_workflow <- workflow() %>% 
+                 add_model(tree_model) %>% 
+                 add_recipe(fire_recipe)
+```
+
+d. Create a grid of hyper-parameter values to test
+
+```{r}
+tree_grid <- grid_random(cost_complexity(),
+                          tree_depth(),
+                          min_n(), 
+                          size = 10)
+```
+
+e. Tune decision tree workflow
+
+```{r}
+set.seed(314)
+tree_tuning <- tree_workflow %>% 
+               tune_grid(resamples = fire_folds,
+                         grid = tree_grid)
+```
+
+
+f. Show the best models under the accuracy criteria.
+
+```{r}
+tree_tuning %>% show_best('accuracy')
+```
+
+g. Select best model based on accuracy and view the best parameters. What is the corresponding tree depth?
+
+```{r}
+best_tree <- tree_tuning %>%  select_best(metric = 'accuracy')
+best_tree
+```
+
+
+h. Using the `best_tree` object, finalize the workflow using `finalize_workflow()`. 
+
+```{r}
+final_tree_workflow <- tree_workflow %>% finalize_workflow(best_tree)
+```
+
+i. Fit the train data to the finalized workflow and extract the fit.
+
+```{r}
+tree_wf_fit <- final_tree_workflow %>% fit(data = fire_train)
+```
+
+```{r}
+tree_fit <- tree_wf_fit %>%  extract_fit_parsnip()
+```
+
+j. Construct variable importance plot. What can you conclude from this plot?
+
+```{r}
+vip(tree_fit)
+```
+
+k. Construct a decision tree. What do you see in this plot?
+
+```{r}
+rpart.plot(tree_fit$fit, roundint = FALSE)
+```
+
+
+```{r}
+pruned_tree <- prune(tree_fit$fit, cp=0.01)
+rpart.plot(pruned_tree, roundint = FALSE)
+
+```
+
+
+-----------------------------------------------------------------
+
+## Group Activity 2
+
+Use the `fire` dataset again to fit a random forest algorithm to produce optimal set of variables used in predicting fire. Use the same recipe defined earlier in group activity 1.
+
+a. Specify a decision tree classification model with `ranger` computational engine and `impurity` for variable importance. Prepare the model for tuning (i.e., fitting with a range of parameters for validation purposes).
+
+
+```{r}
+rf_model <- rand_forest(mtry = tune(),
+                        trees = tune(),
+                        min_n = tune()) %>% 
+            set_engine('ranger', importance = "impurity") %>% 
+            set_mode('classification')
+```
+
+b. Define a workflow object.
+
+
+```{r}
+rf_workflow <- workflow() %>% 
+               add_model(rf_model) %>% 
+               add_recipe(fire_recipe)
+```
+
+c. Create a grid of hyper parameter values to test. Try different values.
+
+```{r}
+rf_grid <- grid_random(mtry() %>% range_set(c(1, 8)),
+                       trees(),
+                       min_n(),
+                       size = 10)
+```
+
+
+d. Tune the random forest workflow. Use the `fire_folds` object from before with 10 cross validation routine.
+
+```{r}
+rf_tuning <- rf_workflow %>% 
+             tune_grid(resamples = fire_folds,
+                       grid = rf_grid)
+```
+
+e. Select the best model based on accuracy.
+
+
+```{r}
+best_rf <- rf_tuning %>% 
+           select_best(metric = 'accuracy')
+```
+
+
+f. Finalize the workflow, fit the model, and extract the parameters.
+
+```{r}
+final_rf_workflow <- rf_workflow %>% 
+                     finalize_workflow(best_rf)
+rf_wf_fit <- final_rf_workflow %>% 
+             fit(data = fire_train)
+rf_fit <- rf_wf_fit %>% 
+          extract_fit_parsnip()
+```
+
+g. Plot the variable importance. What can you conclude from this plot?
+
+
+```{r}
+vip(rf_fit)
+```
+
+
+
+
+```{r}
+# Extract the ranger model from the fitted parsnip model
+ranger_model <- rf_fit$fit
+
+# Get the tree from the ranger model
+library(ranger)
+single_tree <- ranger::getTree(ranger_model, k = 1)
+
+# Visualize the tree
+plot(as.party(single_tree), type = "simple")
+
+```
+
+
+
+\newpage
+
+## Class Notes

@@ -1,0 +1,477 @@
+---
+title: "Homework 5 Solution"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE,comment=NULL,message=FALSE, include=TRUE)
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+library(nycflights13)
+library(lubridate)
+library(readr)
+theme_set(theme_stata(base_size = 10))  # for nice looking plots
+library(babynames)
+library(palmerpenguins)
+```
+
+## Disclaimer
+
+This homework solution is for the sole benefit of students taking Stat 220 from Prof. Bastola during Winter term 2024.  Dissemination of this solution to people who are not registered for this course is not permitted and will be considered grounds for Academic Dishonesty for the all individuals involved in the giving and receiving of the solution. 
+
+
+## Assignment prompt
+
+
+## Problem 1: regular expression using `babynames`
+
+### a. 
+
+Construct a regular expression (regex) to find all names that end in a vowel (here, you can consider "y" to be a vowel). Store this regex in `pattern` and run the code to determine how many baby names in 2017 ended with a vowel. Use babynames dataset from the `babynames` package.
+
+
+*Answer:*  
+
+First, I specify that we are looking for any letter in the set "aeiouy", then I add the anchor for the end of the string. **The sequence of attempts below shows how you build from an initial idea to your final pattern. You can also use `str_view_all` to highlight these patterns, but this won't knit to a pdf!**
+
+```{r}
+# create a pattern
+x <- c("abba", "day", "cat")
+pattern <- "aeiouy"  # attempt 1
+str_detect(x, pattern) # nope! this is looking for the string "aeiouy"!
+pattern <- "[aeiouy]"  # attempt 2: "one of"
+str_detect(x, pattern) # nope! looks for any vowel
+
+# test your pattern 
+pattern <- "[aeiouy]$"  # attempt 3: this finds vowels at the end of a string
+str_detect(x, pattern)
+
+babynames %>% 
+  filter(year == 2017) %>%        
+  summarize(last_vowel = sum(str_detect(name, pattern)))
+```
+
+
+### b. 
+
+Write a regex that finds names that start in "Ed" and ends with "rd" so that it matches names like `"Edward"` and `"Eddard"`. Any number of characters can be in between. Check your regex using the small vector given below then determine how many babynames in 2017 match this pattern.
+
+```{r}
+x <- c("Edward", "Eddard", "Ned")
+```
+
+
+*Answer:*  
+We need a pattern that starts (`^`) with `Ed`, followed by any characters `.`, and ends with `rd`. 
+
+We could start with this attempt:
+
+```{r}
+pattern <- "^Ed.rd$"  # start, anything, end
+str_detect(x, pattern)
+babynames %>% filter(year == 2017, str_detect(name, pattern))
+```
+
+but `.` only specifies one character. 
+
+Here we use `.*` to denote "zero or more" characters before ending with `rd`.
+
+```{r}
+pattern <- "^Ed.*rd$"  # start, anything (0 or more), end
+str_detect(x, pattern)
+babynames %>% filter(year == 2017, str_detect(name, pattern))
+```
+
+
+### c.
+
+Construct a regex to find all names that only contain vowels in 2017. (In this problem, consider vowels to be aeiouy.) Are there any such names? If so, what are they?
+
+*Answer:*  
+
+here we specify a name that both starts with and ends with one or more vowels: 
+
+```{r}
+pattern <- "^[aeiouy]+$"
+str_detect(c("you", "me"), pattern)
+
+# Extracting names
+
+babynames %>% 
+  mutate(name = str_to_lower(name)) %>%
+  filter(year == 2017, str_detect(name, pattern)) %>% 
+  pull(name)  # vector of names
+```
+
+### d.
+
+Construct a regex to find all four-letter names in 2017 and store these names in a vector. (Hint: try using `dplyr::pull`) Print the length of this vector. (Please don't print the entire vector.)
+
+*Answer:*   
+
+There are 2960 four-letter baby names in 2017.
+
+You might first try a pattern that is 4 letters long, but this will capture any string of 4 letters within a longer name
+
+```{r}
+pattern <- "[a-z]{4}"  # attempt 1
+str_detect(c("mary","ann", "maryann"), pattern)  # nope! 
+```
+
+Let's try a start and end anchor again to find all names that have 4 letters to start and end the name
+
+```{r}
+pattern <- "^[a-z]{4}$"
+str_detect(c("mary","ann", "maryann"), pattern)  # seems to work!
+
+# Extracting names
+four_letter_names <- babynames %>% 
+  mutate(name = str_to_lower(name)) %>%
+  filter(year == 2017, str_detect(name, pattern)) %>%  
+  pull(name) 
+length(four_letter_names)
+```
+
+**Not sufficient** You can use `str_length` to filter 4 letter names. But the prompt asked for a regular expression that can do this, so make sure you understand that method too! 
+
+```{r}
+# not a regex solution! 
+babynames %>%   
+  filter(year == 2017, str_length(name) == 4)
+```
+
+
+### e.
+
+Write a regex to find all of the four letter names that are palindromes in your names from part (d). ("Anna" is one such example.) Check this on the baby names from 2017. (Hint: You will need to capture the first two letters individually and then use back references. Also, it's easier to operate on all lowercase letters.)
+
+*Answer:*  
+
+There are 10 such 4 letter names in 2017.
+
+Here we using two groupings of any character for the first two spots, then repeat the second grouping and the first. If we wanted to 
+
+```{r}
+pattern <- "(.)(.)\\2\\1"
+str_detect(c("anna", "baab"), pattern)
+
+# Extracting names from 2017
+str_subset(four_letter_names, pattern)
+```
+
+
+----------------------------------------------------------
+
+
+## Problem 2: Energy autocorrelation
+
+Auto correlation measures the correlation between measurements that differ by a fixed amount of time. For example, "lag 1" autocorrelation measures the correlation between measurements that are 1 time unit apart, lag 2 measures the correlation between measurements 2 time units apart, etc. 
+
+```{r}
+energy <- readr::read_csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/energy.csv",
+                    col_type = cols(
+                     .default = col_double(), 
+                      Timestamp = col_datetime(format = ""),
+                      dayWeek = col_factor(levels=c("Mon","Tues","Wed","Thurs","Fri","Sat","Sun"))
+                     ))
+```
+
+The `acf` function computes autocorrelation in R. Here we get autocorrelation for Olin energy readings. The correlation between units 0 minutes apart is 1 (they are the same measurements!), the correlation between readings 15 minutes apart is 0.956, between 30 minutes apart is 0.95, between 45 minutes apart is 0.934 and between 60 minutes apart is 0.917. It makes sense that a correlation exists between energy use at points close in time. 
+
+```{r}
+x <- energy %>% 
+  arrange(Timestamp) %>%    # making sure sorted by time
+  pull("Olin_Hall_of_Science")
+acf_out <- acf(
+  x,   # time series
+  na.action = na.pass,    # skips over NAs
+  lag.max = 4,   # max lag
+  plot = FALSE)   # don't plot
+acf_out
+acf_out$acf   # autocorr values
+acf_out$lag   # lag values
+```
+
+
+### a.  
+
+Write a function called `autocor_fun` that will take in:
+
+- the vector of KWH values from one building
+- a max lag value
+  
+and return a *data frame* with variables
+
+- `autocor` which measures autocorrelation between `energyKWH` values. Note that you will need to extract the `acf` values from the `acf` function and coerce these into a vector with `as.vector`. 
+- `lag` which tells what lag the `autocor` was computed at
+
+Use the `na.action` and `plot` arguments in `acf` that are shown above when writing your function.
+
+Check your `autocor_fun` on the Olin KWH data that was used above with a max lag of 4. 
+
+*answer:*
+
+```{r}
+autocor_fun <- function(x, maxlag){
+  output <- acf(
+    x, 
+    na.action = na.pass, 
+    lag.max = maxlag,
+    plot = FALSE)
+  data.frame(
+    autocor = as.vector(output$acf), 
+    lag = 0:(maxlag)) %>% as_tibble()
+}
+
+autocor_fun(energy$"Olin_Hall_of_Science", maxlag = 4)  #
+
+```
+
+### b. 
+
+Use the `purrr` package to apply `autocor_fun` to the buildings `"Sayles-Hill" ,"Language_&_Dining_Center", "Olin_Hall_of_Science"` with a max lag of 4. Use the wide data frame `energy` and your result should be a data frame that also identifies buildings. 
+
+*answer:*
+
+```{r}
+energy %>% 
+    arrange(Timestamp) %>%  # make sure arranged by time 
+  select("Sayles-Hill" ,"Language_&_Dining_Center", "Olin_Hall_of_Science") %>%
+ map_dfr(autocor_fun, maxlag = 4, .id = "building")
+```
+
+
+```{r}
+energy %>% 
+    arrange(Timestamp) %>%  # make sure arranged by time 
+  select("Sayles-Hill" ,"Language_&_Dining_Center", "Olin_Hall_of_Science") %>%
+ map_df(autocor_fun, maxlag = 4, .id = "building")
+```
+
+### c. 
+
+Repeat (b) but this time use the narrow version of the data `energy_narrow`. This time you will use `dplyr` groupings and summarize to apply the  `autocor_fun` to each building's KWH. (Don't forget to filter to the three buildings). Your data frame results for (b) and (c) should be identical.
+
+```{r}
+energy_narrow <- energy %>% 
+  mutate(month = month(month, label=TRUE)) %>%
+  pivot_longer(
+    cols = 9:90,
+    names_to = "building", 
+    values_to = "energyKWH") 
+```
+
+
+*answer:*
+
+```{r}
+energy_narrow %>% 
+  filter(building %in% c("Sayles-Hill" ,"Language_&_Dining_Center", "Olin_Hall_of_Science"))  %>%
+  arrange(Timestamp) %>%  # make sure arranged by time 
+  group_by(building) %>%
+  summarize(autocor_fun(energyKWH, maxlag = 4))  # get 1 hour of acf's
+```
+
+
+### d. 
+Create a data frame that contains acf values for 24 hours (i.e. a max lag of 24x4=96) for the three buildings used in (b, c). The plog acf values (y) against lag (x) for each of the buildings and describe what trends you see. 
+
+*answer:* We see that correlation is the lowest (and negative) at a lag of about 50, or measurements about 12.5 hours apart (50x15/60). This means there is a negative correlation between, say, KWH usage at noon and KWH usage at midnight. But after this acf increases which means that, say, KWH usage at noon on a Monday is highly correlated with KWH usage at 11:00am on a Tuesday. 
+
+```{r}
+autocor_df <- energy_narrow %>% 
+  filter(building %in% c("Sayles-Hill" ,"Language_&_Dining_Center", "Olin_Hall_of_Science"))  %>%
+  arrange(Timestamp) %>%  # make sure arranged by time 
+  group_by(building) %>%
+  summarize(autocor_fun(energyKWH, maxlag = 24*4))  # get 24 hours of acf's
+autocor_df 
+```
+
+```{r}
+autocor_df %>% 
+  filter(building %in% c("Sayles-Hill" ,"Language_&_Dining_Center", "Olin_Hall_of_Science"))  %>%  
+  ggplot(aes(x = lag, y = autocor, color = building)) +
+  geom_point(aes(shape=building)) + 
+  geom_line() + 
+  labs(y = "autocorrelation", x = "lag (every 15-minutes)")
+```
+
+
+
+
+## Problem 3: weather
+
+Load the `nasaweather` data and look at the help file for the atmospheric data `?atmos`. 
+
+### a.
+
+Create a `for` loop that computes the coefficient of variation for all atmospheric measurements except location (lat/long) and time (year, month) variables. The coefficient of variation is the ratio of the standard deviation over the mean of a variable. Print out the output of your loop.
+
+*answer:*
+
+```{r}
+library(nasaweather)
+
+my_cvs <- rep(NA, 7)  # indexed over the 7 variables
+
+# this option indexes by index position number
+for (i in 1:7){
+  my_cvs[i] <- sd(atmos[[i + 4]], na.rm = TRUE)/mean(atmos[[i + 4]], na.rm = TRUE)
+}
+my_cvs
+
+# you could use seq_along but this will also be indexed by 1-7 since you've subsetted the data
+seq_along(atmos[,5:11])
+
+# this option indexes by column number from the data frame
+for (i in 5:11){
+  my_cvs[i-4] <- sd(atmos[[i]], na.rm = TRUE)/mean(atmos[[i ]], na.rm = TRUE)
+}
+my_cvs
+```
+
+### b.
+
+Use a `map` function (from `purrr` package) to compute the coefficient of variation for all atmospheric measurements except location (lat/long) and time (year, month) variables. Use a function that returns a vector or data frame (and show this output).
+
+*answer:*
+
+```{r}
+# here is one way: using the special map formula syntax for defining a function: (see ?map for more info)
+atmos %>% 
+  select(5:11) %>%
+  map(.f = ~sd(.x, na.rm = TRUE)/mean(.x, na.rm=TRUE)) %>% unlist()
+
+# here is another way: using the base-R way of creating a function
+atmos %>% 
+  select(5:11) %>%
+  map_dbl(.f = function(x) sd(x, na.rm = TRUE)/mean(x, na.rm=TRUE))
+```
+
+
+### c. 
+Create a function called `my_stats` that computes the following statistics for an input vector: mean, sd, and 5-number summary (min/Q1/median/Q3/max). The function should return an  output object that is a "named" vector. E.g. the following is a named vector with the name of the left side of `=` and the value on the right side. Show the output of your function by inputting the `temp` values from `atmos`.
+
+```{r}
+# e.g. named vector with names x and y and values 1 and 2
+c(x = 1, y = 2)
+```
+
+*answer:*
+```{r}
+my_stats <- function(x, na.rm = TRUE){
+  mean <- mean(x, na.rm = na.rm)
+  sd <- sd(x, na.rm = na.rm)
+  percentiles <- quantile(x, na.rm = na.rm)
+  return(c(mean = mean, sd = sd, Q = percentiles))
+}
+my_stats(atmos$temp)
+```
+
+### d. 
+Use `map_df` to compute `my_stats` for all atmospheric measurements except location (lat/long) and time (year, month) variables. Include the variable names as a column in your data frame. 
+
+*answer:*
+```{r}
+atmos %>% select(5:11) %>%
+  map_df(my_stats, .id = "variables")
+```
+
+### e. 
+For each year, compute `my_stats` for the `temp` variable. To do this:
+
+- use a year grouping and the `summarize` command 
+- add a `stats` variable that identifies which statistic is entered in a given row
+- then make a wider version of this data that contains a column for each of the `my_stats` for each year in the data.  (Final dimensions should be 6x8)
+
+*answer:*
+
+```{r}
+atmos %>% 
+  group_by(year) %>% 
+  summarize(values = my_stats(temp)) %>% 
+  mutate(stats = c("mean", "sd", "min", "perc_25", "median", "perc_75", "max")) %>%
+  pivot_wider(
+    names_from = stats,
+    values_from = values
+  )
+```
+
+
+
+## Problem 4: String Extraction with titanic train dataset.
+
+
+```{r}
+#install.packages("titanic")
+library(titanic)
+set.seed(12233)
+df = tibble(titanic_train)  #load dataset
+```
+
+### a. The package `titanic` has data on the survival information of Titanic passengers including `Name`. Extract titles from the names of the passengers. These include `Mr`, `Mrs`, etc. Use suitable regex that consists of a look ahead pattern that tells us to look for something followed by a space, one or more instances of string, and a look behind to match patterns to a period after the string, respectively.
+
+
+```{r}
+# Define the regex
+reg <- "(?<=\\s)[[:alpha:]]+(?=\\.)"
+```
+
+
+### b. Plot the distribution of the the titles using either `geom_col()` or `geom_bar()` after properly reordering the variable based on their counts.
+
+```{r}
+df %>% 
+  mutate(title = str_extract(str_to_lower(Name), reg)) %>%
+  count(title, sort = TRUE) %>%
+  ggplot(aes(fct_reorder(title,n), n)) +
+  geom_col(fill = "#773232") +
+  coord_flip() +
+  labs(x = "title") + 
+  ggtitle("Top titles in Titanic test datset") 
+  
+```
+
+### c. Extract family names from `Names` and plot the 10 most frequent family names. Remember to extract the pattern to include any kinds of characters (.) that are 1 character or more in length (+) and are followed by a comma(?=\\,). What is/are the most popular last name/names?
+
+```{r}
+reg <- ".+(?=,)"
+
+
+df %>% 
+  mutate(family = str_extract(str_to_lower(Name), reg)) %>%
+  count(family, sort = TRUE) %>%
+  top_n(10) %>%
+  ggplot(aes(fct_reorder(family,n), n)) +
+  geom_col(fill = "#773232") +
+  coord_flip() +
+  labs(x = "title") + 
+  ggtitle("Top titles in Titanic test datset") 
+
+```
+
+### d. Write a function that plots the top 10 last names of passengers beginning and ending with certain letters passed as an argument to the function. Pass the `data tibble`, `letter corresponding to the beginning of the last name`, and `letter corresponding to the ending of the last name` as arguments to the function, and a plot (a distribution plot depicting the last names and their count) as the output of the function.
+
+
+```{r}
+plot_top_ten <- function(data = df, first, last){
+  reg1 <- ".+(?=,)"
+  reg2 <- str_glue("^[",{first}, "].*[",{last},"]$")
+  p1 <- df %>% na.omit() %>%
+  mutate(family = str_extract(str_to_lower(Name), reg1)) %>%
+  count(family, sort = TRUE) %>%
+  filter(str_detect(family, reg2)) %>%  
+  top_n(10) %>%
+  ggplot(aes(fct_reorder(family,n), n)) +
+  geom_col(fill = "#773232") +
+  coord_flip() +
+  labs(x = "title") + 
+  ggtitle("Top titles in Titanic test datset") 
+p1
+}
+
+plot_top_ten(data = df, first = "Dd" , last = "e")
+```
+
+

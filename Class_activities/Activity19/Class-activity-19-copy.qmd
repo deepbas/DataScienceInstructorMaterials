@@ -1,0 +1,296 @@
+---
+title: "Class Activity 19"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  html_document:
+    df_print: paged
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      size = "small", 
+                      collapse = TRUE, 
+                      comment = NA, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      error = TRUE) # change it to TRUE
+
+# List of required packages
+library(tidyverse)
+library(shiny)
+library(dplyr)
+library(babynames)
+```
+
+
+\vspace*{1in}
+
+
+Explore the magic firsthand! Simply paste the code provided in the slides into the field below and run it to witness the output in action.
+
+```{r}
+# Try the Shiny Code Yourself! 1
+library(shiny)
+ui <- fluidPage(
+  titlePanel("Updating Plot Based on User Input"),
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("obs", "Number of observations:", 
+                   value = 100, min = 1)
+    ),
+    mainPanel( plotOutput("distPlot"))
+  )
+)
+server <- function(input, output) {
+  output$distPlot <- renderPlot({
+    hist(rnorm(input$obs))
+  })
+}
+shinyApp(ui, server)
+```
+
+
+```{r}
+# Try the Shiny Code Yourself! 2
+ui <- fluidPage(
+  mainPanel(
+    actionButton("addButton", "Add 1"),
+    textOutput("result")
+  )
+)
+server <- function(input, output) {
+  sum_so_far <- eventReactive(input$addButton, {
+    if (is.null(input$addButton)) {
+      0
+    } else {
+      input$addButton
+    }
+  })
+  output$result <- renderText({
+    paste("Sum so far:", sum_so_far())
+  })
+}
+shinyApp(ui, server)
+```
+
+```{r}
+# Try the Shiny Code Yourself! 3
+ui <- fluidPage(
+  mainPanel(
+    numericInput("obs", "Number of observations", value = 100, min = 1),
+    actionButton("updateButton", "Update Plot"),
+    plotOutput("distPlot")
+  )
+)
+server <- function(input, output) {
+  data_to_plot <- eventReactive(input$updateButton, {
+    rnorm(input$obs)
+  })
+  output$distPlot <- renderPlot({
+    hist(data_to_plot())
+  })
+}
+shinyApp(ui, server)
+```
+
+```{r}
+# Try the Shiny Code Yourself! 4
+ui <- fluidPage(
+  titlePanel("Simple Counter"),
+  numericInput("adjustValue", "Adjust by:", 1),
+  actionButton("incrementButton", "Increment"),
+  actionButton("decrementButton", "Decrement"),
+  br(),
+  textOutput("currentValue")
+)
+server <- function(input, output) {
+  counter <- reactiveValues(value = 0)
+  observeEvent(input$incrementButton, {
+    counter$value <- counter$value + input$adjustValue
+  })
+  observeEvent(input$decrementButton, {
+    counter$value <- counter$value - input$adjustValue
+  })
+  output$currentValue <- renderText({
+    paste("Current Value:", counter$value)
+  })
+}
+shinyApp(ui, server)
+```
+
+```{r}
+# Try the Shiny Code Yourself! 5
+ui <- fluidPage(
+  mainPanel(
+    actionButton("showAlert", "Show Alert"),
+    textOutput("alertCount")
+  )
+)
+server <- function(input, output) {
+  alert_counter <- reactiveValues(count = 0)
+  observeEvent(input$showAlert, {
+    showModal(modalDialog(
+      title = "Alert",
+      "This is an alert message!"
+    ))
+    alert_counter$count <- alert_counter$count + 1
+  })
+  output$alertCount <- renderText({
+    paste("Number of alerts shown:", alert_counter$count)
+  })
+}
+shinyApp(ui, server)
+```
+
+```{r}
+# Try the Shiny Code Yourself! 6
+ui <- fluidPage(
+  textInput("textInput", "Enter some text"),
+  actionButton("submitButton", "Submit"),
+  textOutput("outputText"),
+  textOutput("counter")
+)
+server <- function(input, output) {
+  counter <- reactiveValues(clicks = 0)
+  observeEvent(input$submitButton, {
+    counter$clicks <- counter$clicks + 1
+    output$outputText <- renderText({
+      # Using isolate() to prevent reactivity on textInput changes
+      paste("You submitted:", isolate(input$textInput))
+    })
+    output$counter <- renderText({
+      paste("Submit button clicked", counter$clicks, "times")
+    })
+  })
+}
+shinyApp(ui, server)
+```
+
+
+
+## Question 1
+
+We are utilizing the `babynames` dataset to explore and visualize how the popularity of specific names has evolved over time in a Shiny app.
+
+
+### (a) Create a user interface (UI) by using `textInput` for the baby name input, `selectInput` for gender selection, and adding an `actionButton` to initiate the search.
+
+```{r}
+# fill in the portions marked with # fill #
+ui <- fluidPage(
+  titlePanel("Baby Names Trend"),
+  sidebarLayout(
+    sidebarPanel(
+      textInput("name", "Enter a Baby Name:", "Emma"),
+      selectizeInput("gender", "Select Gender:", choices = c("Male" = "M", "Female" = "F")),
+      actionButton("goButton", "Show Trend")
+    ),
+    mainPanel(plotOutput("nameTrend"))
+  )
+)
+```
+
+
+### (b) Filter the `babynames` dataset based on user inputs for name and gender by utilizing `eventReactive` to respond to the action button press, and apply filter within this reactive context, using `isolate` to access the inputs without establishing reactive dependencies.
+
+
+```{r}
+# fill in the portions marked with # fill #
+
+server <- function(input, output) {
+  nameData <- eventReactive(input$goButton, {
+    req(input$name) # Ensure the name input is not empty
+    babynames %>% 
+      filter(name == input$name, sex == isolate(input$gender))
+  })
+}
+
+shinyApp(ui, server, options = list(height = 800))
+
+
+```
+
+
+### (c) Create a line plot to visualize the trend of a selected baby name over the years by using `renderPlot`, showing the number of occurrences `(n)` of the name across different years `(year)` in addition to what you did in part b.
+
+```{r}
+server <- function(input, output) {
+  nameData <- eventReactive(input$goButton, {
+    req(input$name) # Ensure the name input is not empty
+    babynames %>% 
+      filter(name == isolate(input$name), sex == isolate(input$gender))
+  })
+  
+  
+  output$nameTrend <- renderPlot({
+    req(nameData()) 
+    ggplot(nameData(), aes(x = year, y = n)) +
+      geom_line() +
+      labs(title = paste("Trend for name", isolate(input$name)),
+           x = "Year", y = "Number of Babies") +
+      theme_minimal()
+  })
+}
+```
+
+Remember, without `isolate`, any change to the inputs `(input$name and input$gender)` would immediately trigger the reactive expressions (`nameData` and the plotting logic within `renderPlot`) to re-execute. This means the plot would update every time the user types a letter in the name input field or changes the gender, rather than waiting for the user to press the `goButton`.
+
+### (d) Run the Shiny app by combining the UI and server components using `shinyApp.`
+
+```{r}
+shinyApp(ui, server, options = list(height = 800))
+```
+
+
+## Select multiple names
+
+
+```{r}
+ui <- fluidPage(
+  titlePanel("Baby Names Trends for Multiple Names"),
+  sidebarLayout(
+    sidebarPanel(
+      textAreaInput("names", "Enter Baby Names (separated by commas):", "Emma,Olivia,Noah"),
+      selectizeInput("gender", "Select Gender:", choices = c("Male" = "M", "Female" = "F")),
+      actionButton("goButton", "Show Trends")
+    ),
+    mainPanel(plotOutput("nameTrends"))
+  )
+)
+
+```
+
+
+```{r}
+server <- function(input, output) {
+  nameData <- eventReactive(input$goButton, {
+    req(input$names) # Ensure the name input is not empty
+    inputNames <- unlist(strsplit(isolate(input$names), ",")) %>% str_trim() 
+    
+    data <- lapply(inputNames, function(inputName) {
+      babynames %>%
+        filter(name == inputName, sex == isolate(input$gender))
+    }) %>% bind_rows() # Combine data for all names
+    
+    return(data)
+  })
+  
+  output$nameTrends <- renderPlot({
+    req(nameData())
+    ggplot(nameData(), aes(x = year, y = n, color = name)) +
+      geom_line() +
+      labs(title = "Trend for Names",
+           x = "Year", y = "Number of Babies") +
+      theme_minimal()
+  })
+}
+
+```
+
+
+```{r}
+shinyApp(ui, server, options = list(height = 800))
+```
+

@@ -1,0 +1,270 @@
+---
+title: "Homework 2 Solution"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE,comment=NULL,message=FALSE, include=TRUE)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+theme_set(theme_stata(base_size = 10))  # for nice looking plots
+```
+
+## Disclaimer
+
+This homework solution is for the sole benefit of students taking Stat 220 from Prof. Bastola during Spring term 2024.  Dissemination of this solution to people who are not registered for this course is not permitted and will be considered grounds for Academic Dishonesty for the all individuals involved in the giving and receiving of the solution. 
+
+## Problem 1: Spot the error
+
+Explain why the following command does not color the data points blue, then write down the command that will turn the points blue.
+```{r}
+library(ggplot2)
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = "blue"))
+```
+
+
+*answer:*
+
+The `aes` aesthetic command defines how variables in the data set map to positions in the graph. Using `color` in the `aes` results in ggplot thinking that the character vector `"blue"` is a discrete variable value. It is assigned to all data points and used as a "discrete" variable value when coloring the graph. The first color choice for the default `scale_color_discrete` palette is the red you see in the graph. 
+
+To correct the graph, move the color choice outside the `aes`:
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+
+
+
+## Problem 2: Penguins 
+
+Load the data `penguins` using the command
+```{r}
+# install.packages("palmerpenguins")  # run once then DELETE FROM RMD
+data(penguins, package = 'palmerpenguins')
+```
+
+Look at help file for for variable info: `?palmerpenguins::penguins`. 
+
+### a. 
+
+Create a scatterplot of `body_mass_g` (y) against `bill_length_mm` (x) and separate the plot into facets by `species`. 
+
+*answer:*
+```{r}
+g <- ggplot(penguins, aes(x = bill_length_mm, y = body_mass_g)) 
+g + geom_point() + 
+  facet_wrap(~species)
+```
+
+### b. 
+
+Add regression lines to the plot in (a) for each species with no standard error shading. See `?geom_smooth` to see how to add a regression (`lm`) line instead of a wigglely smoother. 
+
+*answer:*
+
+```{r}
+g + geom_point() + 
+  facet_wrap(~species) + 
+  geom_smooth(method = lm, se = FALSE)
+```
+
+### c. 
+
+Instead of faceting by `species`, use `species` to color the points  and regression lines. Use a color scheme for the points that is not the default coloring. 
+
+*answer:*
+
+```{r}
+g + geom_point(aes(color = species)) + 
+  geom_smooth(aes(color = species), method = lm, se = FALSE) +
+  scale_color_brewer(palette = "Set1")
+```
+
+### d. 
+
+Which visual, (b) or (c), makes it easiest to compare the **slopes** of the lines for each species? Explain.
+
+
+*answer:* 
+
+The plot in (c) is easier to directly compare slopes on the same x/y scales.
+
+----------------------------------
+
+
+## Problem 3: Storm paths by year
+
+Install the package `nasaweather`, if needed, and load the `storms` data.
+
+```{r}
+# install.packages("nasaweather")
+data(storms, package = "nasaweather")
+```
+
+### a. 
+Use `geom_path()` to plot the path of each tropical storm in this data set where you 
+
+- use color to distinguish the storms from one another
+- use faceting to plot each `year` on its own panel
+- change your coordinate system to a map
+
+*answer:* The `group` argument is needed so that one path is drawn for each named storm. 
+
+```{r}
+dplyr::glimpse(storms)
+storm_plot <-  ggplot(storms, aes(x = long, y = lat)) +  
+  geom_path(aes(group = name, color = name)) +  
+  facet_wrap(~year) + 
+  scale_color_discrete(guide = "none") + 
+  labs( 
+    x = "longitude", 
+    y = "latitude", 
+    title = "Atlantic storms"
+    )
+storm_plot + coord_map() 
+```
+
+
+### b. 
+
+Add a map of the US, Mexico, Canada and the UK to your map in (a) so you can get a better idea where these storms are traveling, truncating the longitude as suggested in the hints.
+
+Hints:
+
+
+- Look at the help file for `?map_data`. To create map data with only the counties around the storm paths, use data from the the `world` map from `map_data` with the following `region`s specified: `usa`, `mexico`, `canada` and `uk`.
+- Add the map data for the regions of interest using `geom_polygon`. (Hint: make sure your paths map doesn't have `color` as a global `aes`.)
+- Modify your `coord_map` from part (a) to add the arguments `xlim`  and `ylim` to set the min and max limits of your graph to the min/max latitude and longitude of the `storms`.
+
+
+*answer:*
+First pull the map data for the countries of interest
+
+```{r}
+ctry <- map_data("world", 
+                 region = c(
+                   "usa",
+                   "mexico",
+                   "canada",
+                   "uk"
+                 ))
+dplyr::glimpse(ctry)
+storm_plot + 
+  geom_polygon(data = ctry, 
+               aes(x = long, 
+                   y = lat, 
+                   group = group), alpha = 0.6, color = "white") + 
+  coord_map(xlim  = c(min(storms$long), max(storms$long)),
+            ylim  = c(min(storms$lat), max(storms$lat)))
+```
+
+
+
+## Problem 4: explain command (no R needed)
+
+Consider the data set shown in the table below. Each row represents a class and `classType` of `S` denotes a statistics class and `C` denotes a CS class. The variable `m` counts the number of mac users in the class and `w` counts the number of windows users. 
+
+classType | m | w 
+------ | -- | --
+C | 10 | 4
+C | 3 | 1
+C | 7 | 3
+S | 2 | 7
+S | 7 | 10
+
+What data set will be produced by the following commands? Describe (**in words**) how the original data set is being modified and show what it looks like using an R Markdown table (like the one used above) to display the new data set. Assume the original data set is named `mydata`. (No credit will be given creating the fake data frame and just  running the code chunks.)
+
+### a.
+```{r, eval=FALSE}
+mydata %>% 
+  filter(classType == "C") %>%
+  select(m, w)
+```
+
+
+*answer:*
+This data set only looks at the number of mac/windows users in CS classes.
+
+m | w 
+-- | --
+10| 4 
+3 | 1 
+7 | 3 
+
+### b. 
+```{r, eval=FALSE}
+mydata %>% 
+  mutate(ratioW = w/sum(w))
+```
+
+
+*answer:*
+The `sum(w)` denominator equals 25, so the ratios are 4/25, 1/25, etc. The value of 25 gives the total number of windows users in all classes so `ratioW` records the proportion of all windows users who are in a given class. 
+
+classType | m | w | ratioW
+------ | -- | -- | ----
+C | 10 | 4 | 0.16 
+C | 3 | 1 | 0.04
+C | 7 | 3 | 0.12
+S | 2 | 7 | 0.28
+S | 7 | 10 | 0.40
+
+### c. 
+```{r, eval=FALSE}
+mydata %>% 
+  group_by(classType) %>%
+  mutate(ratioW = w/sum(w))
+```
+
+*answer:*
+The `sum(w)` denominator equals the sum of `w` for each `classType` group. The total for `C` classes is 8 windows users in all CS classes listed and for `S` classes is 17 windows users in stats classes.   `ratioW` records the proportion of all windows users in a given class type (CS or stats) who are in a specific class. 
+
+classType | m | w | ratioW
+------ | -- | -- | ----
+C | 10 | 4 | 0.50 
+C | 3 | 1 | 0.125
+C | 7 | 3 | 0.375
+S | 2 | 7 | 0.412
+S | 7 | 10 | 0.588
+
+### d. 
+```{r, eval=FALSE}
+mydata %>% 
+  group_by(classType) %>%
+  summarize(Y = sum(w+m))
+```
+
+*answer:*
+We are grouping by `classType` then summarizing the class totals `w+m` with the `sum` function. This will produce a small data frame that gives the total number of CS and stats students:
+
+classType | Y
+----- | --
+C | 28
+S | 26
+
+### e. 
+```{r, eval=FALSE}
+mydata %>% 
+  group_by(classType) %>%
+  mutate(X = w+m, Y = sum(w+m))
+```
+
+
+*answer:*
+
+We are grouping by `classType` which will only effect the output for any command that summarizes variables like `sum`. The `mutate` command preserves the original data frame and adds the variable `X` that records the total number of mac and windows users in a given class (row). The `Y` variable sums the values of `X` for all entries in each `classType` (grouping variable). These values are repeated (28 CS students and 26 stats students) for all classes in each `classType`. 
+
+
+classType | m | w | X | Y
+------ | -- | -- | -- | --
+C | 10 | 4 | 14 | 28
+C | 3 | 1 | 4 | 28
+C | 7 | 3 | 10 | 28
+S | 2 | 7 | 9 | 26
+S | 7 | 10 | 17 | 26
+
+----------------------------------
+

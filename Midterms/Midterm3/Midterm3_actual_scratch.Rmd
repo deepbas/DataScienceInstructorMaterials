@@ -1,0 +1,366 @@
+---
+title: "Midterm III"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, warning = FALSE, 
+                      message=FALSE, include=TRUE, 
+                      fig.height = 4, fig.width = 5)
+
+
+library(tidyverse) 
+library(tidymodels)
+library(mlbench)     # for PimaIndiansDiabetes2 dataset
+library(yardstick) # extra package for getting metrics
+library(parsnip) # tidy interface to models
+library(ggthemes)
+library(vip)
+library(ISLR)
+library(rpart.plot)
+library(janitor)
+library(ranger)
+```
+
+
+## Your name: 
+
+
+# Questions
+
+
+## Q1: Logistic Regression for Classification
+
+We are interested in predicting the diabetes status of patients depending on their Plasma glucose concentration using the `PimaIndiansDiabetes2` dataset from the R package `mlbench`. The diabetes status is stored in the variable `diabetes` and the Plasma glucose concentration is stored in the variable `glucose.` Given below are the data preparation steps. 
+
+
+```{r}
+set.seed(123)
+data(PimaIndiansDiabetes2)
+db <- PimaIndiansDiabetes2 %>% drop_na() %>% select(glucose, diabetes)
+db_single <- db %>% select(diabetes, glucose) %>% 
+  mutate(diabetes = fct_relevel(diabetes, ref = "neg")) 
+glimpse(db_single)
+```
+
+
+```{r}
+db_split <- initial_split(db_single, prop = 0.75)
+# Create training data
+db_train <- db_split %>% training()
+# Create testing data
+db_test <- db_split %>% testing()
+```
+
+
+```{r include = FALSE, echo=FALSE}
+set.seed(123)
+db_recipe <- recipe(diabetes ~ ., data = db_train) %>%
+  step_scale(all_predictors()) %>%
+  step_center(all_predictors()) %>% prep()
+fitted_logistic_model <- logistic_reg(engine = "glm",  # Call the model
+                                      mode = "classification") %>% 
+                        fit(diabetes~., data = db_train)  # Fit the model
+```
+
+
+
+#### (a) What is the reference level of the factor `diabetes`? How many observations are in the test and train datasets?
+
+
+
+\newpage
+
+
+
+### We fit a logistic regression model to the training dataset to predict the diabetes status using Plasma glucose level. The summary of the logistic regression model is given below. 
+
+
+```{r, echo=FALSE}
+tidy(fitted_logistic_model)
+```
+
+
+
+#### (b).  For what Plasma glucose level, the probability of having diabetes is 1/2?
+
+
+
+#
+
+#
+
+
+
+
+#### (c).  What is the odds of getting diabetes, if one has a Plasma glucose level of 150?
+
+
+
+#
+
+#
+
+
+
+
+#### (d). Now, lets predict the diabetes status of patients in the test set using our model fitted using the training set and classify a patient as positive if the predicted probability is at least 0.5, and negative otherwise. Answer the following questions using the resulting confusion matrix. 
+
+
+```{r, echo=FALSE}
+library(probably)
+pred_prob <- predict(fitted_logistic_model,  new_data = db_test,   type = "prob")
+db_results <- db_test %>% bind_cols(pred_prob) %>%
+  mutate(.pred_class = make_two_class_pred(.pred_neg, levels(diabetes), threshold = .5)) %>%
+  select(diabetes, glucose, contains(".pred"))
+
+pred_class <- predict(fitted_logistic_model,  new_data = db_test) 
+bind_cols(db_test %>% select(diabetes), pred_class) %>% 
+  conf_mat(diabetes, .pred_class) %>% # confusion matrix
+  autoplot(type = "heatmap") # with graphics
+```
+
+\newpage
+
+(i) Calculate the accuracy of this classifier.
+
+\vspace*{1in}
+
+
+#
+
+
+
+
+(ii) Calculate the specificity of this classifier.
+
+\vspace*{1in}
+
+
+
+#
+
+
+
+
+
+(iii) Calculate the sensitivity of this classifier.
+
+
+#
+
+
+#
+
+
+#### (e). Which one of False Positive (FP) or False Negative (FN) is more detrimental in this example? You may assume positive diabetes to be a positive case to answer this question. 
+
+
+
+#
+
+#
+
+\newpage
+
+## Q2 Clustering using k-NN
+
+The dataset for this question contains data on 400 students regarding their admission status, GRE score, GPA and rank stored under the variables `admit`, `gre`, `gpa`, and `rank`, respectively. We would like to use k-nearest neighbor algorithm to cluster the students.
+
+```{r}
+gpa_data <- read_csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/GPA.csv")
+gpa_data <- gpa_data %>% mutate(admit = as.factor(admit),
+                                admit = fct_relevel(admit, ref ="Yes"))
+glimpse(gpa_data)
+```
+
+
+```{r, echo=FALSE}
+set.seed(123) 
+gpa_split <- initial_split(gpa_data, prop = 0.75) 
+gpa_train <- gpa_split %>% training()
+gpa_test <- gpa_split %>% testing()
+```
+
+
+#### (a). Why do we need to split the data into training and testing set? Explain.
+
+
+
+#
+
+#
+
+
+
+#### (b). Why do we need to standardize data before fitting a k-NN model? 
+
+
+
+#
+
+#
+
+#
+
+
+
+```{r}
+gpa_recipe <- recipe(admit ~. , data = gpa_train) %>%
+  step_scale(all_predictors()) %>% # scale the predictors
+  step_center(all_predictors()) %>% # center the predictors
+  prep 
+
+gpa_knn_spec <- nearest_neighbor(mode = "classification",
+                                  engine = "kknn",
+                                  weight_func = "rectangular",
+                                  neighbors = tune())
+```
+
+\newpage
+
+#### (c). Briefly explain why do we need to do cross validation when fitting a machine learning model. 
+
+
+
+#
+
+#
+
+#
+
+### Let's do a 10-fold cross validation across a grid of number of neighbors. The following is a plot of how the various metrics change when we vary `k`, the number of neighbors.  A corresponding table with the optimal number of neighbors for the different metrics is also given.
+
+
+```{r echo = FALSE, out.width="90%", fig.align='center', fig.width=7}
+gpa_vfold <- vfold_cv(gpa_train, v = 10, strata = admit)
+k_vals <- tibble(neighbors = seq(from = 1, to = 40, by = 1))
+
+
+gpa_workflow <- workflow() %>% # initialize a workflow
+  add_recipe(gpa_recipe) %>% # add recipe
+  add_model(gpa_knn_spec)  # add model specification
+  
+  
+gpa_tuning <- gpa_workflow %>%  tune_grid(resamples = gpa_vfold, 
+            grid = k_vals,
+            metrics = metric_set(accuracy, sensitivity, specificity, ppv),
+            control = control_resamples(save_pred = TRUE))
+
+cv_metrics <- collect_metrics(gpa_tuning) 
+
+
+final.results <- cv_metrics %>%  mutate(.metric = as.factor(.metric)) %>%
+  select(neighbors, .metric, mean)
+
+final.results %>%
+  ggplot(aes(x = neighbors, y = mean, color = forcats::fct_reorder2(.metric, neighbors, mean))) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  theme_stata() +
+  scale_color_wsj() + 
+  scale_x_continuous(breaks = k_vals[[1]]) +
+  theme(panel.grid.minor.x = element_blank())+
+  labs(color='Metric', y = "Estimate", x = "k")+
+  theme(axis.text.x = element_text(face="bold", color="#993333", 
+                           size=8, angle=45))
+```
+
+
+
+```{r, echo=FALSE}
+best_model_acc <- gpa_tuning %>% select_best(metric = 'accuracy') %>% mutate(metric = "Accuracy")
+best_model_sens <- gpa_tuning %>% select_best(metric = 'sensitivity') %>% mutate(metric = "Sensitivity")
+best_model_spec <- gpa_tuning %>% select_best(metric = 'specificity') %>% mutate(metric = "Specificity")
+best_model_ppv <- gpa_tuning %>% select_best(metric = 'ppv') %>% mutate(metric = "PPV")
+knitr::kable(bind_rows(best_model_acc, best_model_sens, best_model_spec, best_model_ppv) %>% select(-.config))
+```
+
+
+
+
+#### (d). What optimal number of neighbors would you pick based on the plot and the table? Explain your reasoning.
+
+
+
+#
+
+#
+
+
+\newpage
+
+#### (e). Why do you think the sensitivity and the specificity grow in opposing pattern as the number of neighbors increases?
+
+
+#
+
+#
+
+#
+
+#
+
+## Q3 Miscellaneous
+
+
+#### (a). The k-NN method of clustering will yield different accuracies as the value of k changes. As k approaches n, the sample size, what value will the accuracy of the method approach? Explain.
+
+
+#
+
+#
+
+#
+
+#
+
+#### (b). Which of the following can act as possible termination conditions in k-Means? Explain.
+
+  1. Assignment of observations to clusters does not change between iterations. Except for cases with a bad local minimum.
+  2. Centroids do not change between successive iterations.
+  3. All of the above
+
+
+#
+
+#
+
+#
+
+#
+
+\newpage
+
+#### (c). Explain how you can use total within cluster sum of squares to find the "best" choice of k in a k-means clustering algorithm.
+
+
+#
+
+#
+
+#
+
+#### (d). (True/False) A model suffering from overfitting will most likely have high bias.
+
+
+#
+
+#
+
+#
+
+#### (e). (Multiple Choice) Given the following models trained using k-NN, the model which could result in overfitting will most likely have the value of k as
+
+  1. 2
+  2. 10
+  3. 20
+  
+
+
+

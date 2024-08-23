@@ -1,0 +1,199 @@
+---
+title: "Individual Homework 1"
+output: pdf_document
+---
+
+## Name: Put your name here
+
+## I worked with: 
+
+**Click the "Knit" button in RStudio to knit this file to a pdf.**
+
+--------------------------------------------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Problem 1: Markdown output
+
+
+### a. 
+
+*answer:* write your answer here
+
+
+
+### b.
+
+*answer:* write your answer here
+
+
+
+---------------------------
+
+## Problem 2: Logical vectors 
+
+### a.
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### c. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+-------------------------------------------
+
+## Problem 3: Coercion
+
+### a.
+
+*answer:* write your answer here
+
+
+
+### b. 
+
+*answer:* write your answer here
+
+
+
+### c. 
+
+*answer:* write your answer here
+
+
+
+### d.
+
+*answer:* write your answer here
+
+
+
+### e.
+
+*answer:* write your answer here
+
+
+-----------------------------------------------
+
+## Problem 4: Data frames
+
+
+### a. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### c. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### d. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+--------------------------
+
+## Problem 5: Lists
+
+
+### a. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### c. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### d. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+---------------------------------
+
+## Problem 6: More lists
+
+### a. 
+
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### c. 
+`
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+

@@ -1,0 +1,173 @@
+---
+title: "Homework 3"
+output: pdf_document
+---
+
+## Name: Put your name here
+
+## I worked with: 
+
+**Click the "Knit" button in RStudio to knit this file to a pdf.**
+
+--------------------------------------------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, 
+                      warning = FALSE, message = FALSE)
+# add packages here 
+```
+
+
+
+## Problem 1: babynames 
+
+### a. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### c. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### d. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+----------------------------------
+
+## Problem 2: consumption 
+
+```{r}
+food_consumption <- read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/foodconsumption.csv")
+```
+
+### a. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### c. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+------------------------------------------------
+
+
+## Problem 3: restaurant violations
+
+### a. 
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### c. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+----------------------------------------------------
+
+
+## Problem 4: joins
+
+### a.
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+### b.
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+### c.
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+------------------------------------------------------------------------
+
+## Problem 5: restructure
+
+
+### a.
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+### b.
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+------------------------------------------------------------------------

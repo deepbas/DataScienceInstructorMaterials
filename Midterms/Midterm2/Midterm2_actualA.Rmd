@@ -1,0 +1,507 @@
+---
+title: "Midterm II"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+    extra_dependencies: ["float"]
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, warning = FALSE, 
+                      message=FALSE, include=TRUE, 
+                      fig.height = 4, 
+                      fig.width = 5, 
+                      error = TRUE, 
+                      eval = FALSE,fig.pos = "H", out.extra = "")
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(forcats)
+library(stringr)
+library(lubridate)
+```
+
+
+### Your name: 
+
+\vspace*{0.5in}
+
+
+# Questions
+
+
+## Q1 Logistic Regression
+
+We're interested in estimating the probability of developing hypertension based on systolic blood pressure using logistic regression. The logistic regression model has been trained, and the coefficients are $\beta_0 = -3.78$ for the intercept and $\beta_1 = 0.021$ for systolic blood pressure.
+
+### a. Calculate the odds for a systolic blood pressure of 135 mmHg.  (5 points) 
+
+```{r, eval=FALSE, echo=FALSE, fig.pos = "H"}
+log_odds_hypertension <- -3.78 + (0.021 * 135)
+odds_hypertension <- exp(log_odds_hypertension)
+odds_hypertension
+```
+
+
+\vspace*{2in}
+
+
+### b. Convert the odds in part `a` to the probability of developing hypertension.  (5 points) 
+
+
+\vspace*{2in}
+
+
+```{r, eval=FALSE, echo=FALSE, fig.pos = "H"}
+probability_hypertension <- odds_hypertension / (1 + odds_hypertension)
+probability_hypertension
+
+```
+
+
+\newpage
+
+## Q2 k-Nearest Neighbor
+
+Consider a binary classification problem where we use a k-Nearest Neighbors (k-NN) algorithm. We have a confusion matrix as above, which shows the classification performance:
+
+```{r, eval=TRUE, echo=FALSE, fig.pos = "H"}
+# Confusion Matrix
+library(kableExtra)
+# Define an updated confusion matrix
+confusion_matrix <- matrix(c(65, 15, 25, 95), nrow = 2)
+colnames(confusion_matrix) <- c("Predicted Negative", "Predicted Positive")
+rownames(confusion_matrix) <- c("Actual Negative", "Actual Positive")
+
+# Display the confusion matrix as a table
+knitr::kable(confusion_matrix, "latex", booktabs = TRUE, 
+      caption = "Confusion Matrix") %>%
+  kable_styling(latex_options = c("striped", "scale_down"))
+
+```
+
+
+### a. (5 points) 
+
+Given the confusion matrix, calculate the model's precision and recall for the "Positive" class. What does this imply about the model's performance in identifying positive cases?
+
+\vspace*{2.5in}
+
+
+### b. (5 points) 
+
+Discuss the influence of the k parameter size on the occurrence of overfitting and underfitting within the k-Nearest Neighbors (k-NN) algorithm. How can adjusting k help in achieving a balance to optimize model performance?
+
+\vspace*{1in}
+
+
+\newpage
+
+## Q3 Miscellaneous: Multiple Choice (5 points each)
+
+### a. In logistic regression, odds are defined as:
+
+A) The ratio of the probability of the event occurring to the probability of it not occurring.
+B) A direct measure of probability that an event occurs, identical in interpretation.
+C) The logarithmic transformation of probabilities for easier computation.
+D) The probability of an event occurring divided by the probability of all other events.
+
+
+
+### b. In the context of the k-Nearest Neighbors (k-NN) algorithm, consider how the choice of k impacts the model's bias and variance. Select the correct statement from the options below:
+
+A) Increasing the value of k decreases both bias and variance, leading to a universally better model performance across different datasets.
+B) Decreasing the value of k to 1 minimizes the model's variance while maximizing its bias, as the prediction is entirely based on the nearest neighbor.
+C) Increasing the value of k generally increases the model's bias but reduces its variance, as the classification decision is based on a larger, more generalized set of neighbors.
+D) A very large value of k (approaching the size of the training set) results in a model with low bias and high variance, as it becomes too sensitive to the noise in the training data.
+
+
+
+
+### c. When the K-Means clustering algorithm reaches a point where the assignment of observations to clusters remains constant across successive iterations, it indicates:
+
+A) The algorithm has potentially reached a local minimum, but not necessarily the global optimum.
+B) The algorithm has converged, indicating stability in cluster assignment and optimal clustering has been achieved.
+C) The algorithm requires re-initialization as it has likely converged to a suboptimal solution.
+D) The clustering process is incomplete and requires more iterations for accurate cluster assignment.
+
+
+### d. The utilization of cross-validation techniques in machine learning models:
+A) Exclusively mitigates overfitting by training the model on multiple subsets of the data.
+B) Can effectively eliminate the need for a separate test set by using the training data for validation.
+C) Helps in mitigating both overfitting and underfitting by validating the model's performance on different subsets of the dataset.
+D) Guarantees improvement in model performance on unseen data by optimizing hyperparameters.
+
+
+
+
+### e. In logistic regression, changing the decision threshold (default is 0.5) affects the model's sensitivity and specificity. Which of the following statements is true when increasing the decision threshold above 0.5 ?
+
+A) Sensitivity increases while specificity decreases.
+B) Both sensitivity and specificity increase.
+C) Sensitivity decreases while specificity increases.
+D) Both sensitivity and specificity decrease.
+
+
+\newpage
+
+## Q4 Loops and functions
+
+Consider the following data frame `df_waste` which represents the waste generation (in tonnes) of five types of waste materials: Plastic, Metal, Glass, Paper, and Organic in a city over 12 months in a city.
+
+```{r, echo=FALSE, eval=TRUE}
+df_waste <- data.frame(
+  month = 1:12,
+  plastic = c(150, 120, 130, 200, 210, 180, 190, 220, 250, 260, 270, 280),
+  metal = c(100, 110, 120, 130, 140, 150, 130, 120, 110, 115, 125, 135),
+  glass = c(200, 190, 180, 170, 160, 150, 160, 170, 180, 185, 190, 195),
+  paper = c(90, 85, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140),
+  organic = c(300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410)
+)
+```
+
+
+```{r, eval=TRUE}
+glimpse(df_waste)
+```
+
+
+### a. (10 points)
+
+Given `df_waste` write a loop to calculate the monthly average waste generation for each type of material. Your resulting output should be a data frame with each row representing the average waste generation for a month and each column representing a type of material.
+
+
+```r
+#  your r-code
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+\newpage
+
+
+```{r, echo=FALSE, eval=FALSE}
+# Initialize an empty data frame to store monthly averages
+monthly_averages <- data.frame(matrix(ncol = ncol(df_waste)-1, nrow = 1))
+names(monthly_averages) <- names(df_waste)[-1]
+
+for (i in 1:(ncol(df_waste)-1)) {
+  monthly_averages[1, i] <- mean(df_waste[, i+1])
+}
+
+monthly_averages
+```
+
+
+
+### b. (10 points)
+
+Given the dataset `df_waste` representing monthly waste generation (in tonnes) for various materials and the vector `seasons` indicating the corresponding season for each month, calculate the average waste generation for each type of material across the four seasons: Winter, Spring, Summer, and Autumn. The seasons are defined as follows:
+
+- Winter: December, January, February
+- Spring: March, April, May
+- Summer: June, July, August
+- Autumn: September, October, November
+
+The `seasons` vector provided is as follows:
+
+```{r, eval=FALSE}
+seasons <- c("Winter", "Winter", "Spring", "Spring", "Spring", "Summer", 
+             "Summer", "Summer", "Autumn", "Autumn", "Autumn", "Winter")
+```
+
+Use `lapply` or `map` functions from R to compute the average waste generation for each material (`Plastic`, `Metal`, `Glass`, `Paper`, `Organic`) for each `season.` The expected output should be a structured data object (like a `list` or a `data frame`) where each entry or row corresponds to a season, showing the average waste generation for each material during that season.
+
+
+```r
+#  your r-code
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+```{r, echo=FALSE, eval=FALSE, fig.pos = "H"}
+df_waste$season <- rep(seasons, each = nrow(df_waste) / length(seasons))
+
+
+average_waste_by_season <- map_dfr(names(df_waste)[2:6], function(material) {
+  df_waste %>%
+    group_by(season) %>%
+    summarize(Material = material,
+              Average = mean(.data[[material]], na.rm = TRUE)) %>%
+    ungroup()
+})
+
+average_waste_by_season
+```
+
+\newpage
+
+## Q5 String Manipulations
+
+### a. (5 points)
+
+Given a vector of words, write a function named `find_vowel_5_letter_words` that identifies all five-letter words starting and ending with a vowel. The function should return the indices of these words within the original vector. For this problem, assume vowels are "a", "e", "i", "o", and "u", and consider case insensitivity.
+
+```r
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+find_vowel_5_letter_words <- function(words) {
+  pattern <- "^[aeiouAEIOU].{3}[aeiouAEIOU]$"
+  matches <- str_detect(words, pattern)
+  return(which(matches))
+}
+```
+
+
+### b. (5 points)
+
+```{r}
+comments <- c("Loving the new #season!", "Can't wait for #Friday!")
+```
+
+Write a command to remove all instances of # from the `comments` vector.
+
+```r
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+clean_comments <- str_replace_all(comments, "#", "")
+print(clean_comments)
+```
+
+
+
+### c. (5 points)
+
+```{r}
+dates <- c("01012023", "15032024")
+```
+
+Write a command to insert dashes (-) into the dates vector to achieve the desired format.
+
+```r
+
+
+
+
+
+
+
+
+
+```
+
+```{r, echo=FALSE, eval=FALSE}
+formatted_dates <- str_c(
+  str_sub(dates, 1, 2), "-",  
+  str_sub(dates, 3, 4), "-",  
+  str_sub(dates, 5, 8)        
+)
+print(formatted_dates)
+```
+
+\newpage
+
+
+### d. (10 points)
+
+
+```{r}
+info <- "John Doe:john.doe@example.com, Jane Smith:jane.smith@example.com"
+```
+
+Use the `stringr` functions to separate the names and email addresses into two vectors, `names` and `emails.`
+
+```r
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+pairs <- str_split(info, ",\\s*")[[1]]
+
+# Further split each pair into name and email
+separated_info <- str_split(pairs, ":")
+names <- sapply(separated_info, `[`, 1)
+emails <- sapply(separated_info, `[`, 2)
+
+print(names)
+print(emails)
+```
+
+
+
+
+## Q6 Shiny (10 points)
+
+The Shiny application below contains three errors. Identify and correct these errors. Additionally, describe the purpose and functionality of this Shiny app in broad terms.
+
+
+```{r, eval=TRUE}
+library(shiny)
+library(gapminder)
+dplyr::glimpse(gapminder)
+```
+
+
+
+```{r, eval=FALSE}
+ui <- fluidPage(
+  titlePanel("Gapminder Data for Selected Country"),
+  selectInput("countryInput", "Select a Country:", choices = unique(gapminder$country)),
+  actionButton("actionButton", "Show Latest Data"),
+  htmlOutput("countryInfo")
+)
+
+server <- function(input, output) {
+  latestData <- eventReactive(input$showButton, {
+    selectedCountry <- isolate(input$countryInput)
+    gapminder %>% 
+      filter(country == selectedCountry) %>% 
+      tail(1)
+  })
+  
+  output$countryInfo <- renderUI({
+    HTML(stringr::str_c(
+      "Country:", latestData$country, " ",
+      "Life Expectancy:", round(latestData$lifeExp, 2), "years"
+    ))
+  })
+}
+
+shinyApp(ui, server)
+```
+
+
+
+```{r, eval=FALSE, echo=FALSE}
+library(shiny)
+library(gapminder)
+
+ui <- fluidPage(
+  titlePanel("Gapminder Data for Selected Country"),
+  selectInput("countryInput", "Select a Country:", choices = unique(gapminder$country)),
+  actionButton("showButton", "Show Latest Data"),
+  htmlOutput("countryInfo")
+)
+
+server <- function(input, output) {
+  # Use eventReactive to update the data when the button is clicked
+  latestData <- eventReactive(input$showButton, {
+    # Get the selected country's data
+    selectedCountry <- isolate(input$countryInput)
+    gapminder %>% 
+      filter(country == selectedCountry) %>% 
+      tail(1) # Get the most recent record
+  })
+  
+  output$countryInfo <- renderUI({
+    countryData <- latestData()
+    HTML(stringr::str_c(
+      "Country:", countryData$country, " ",
+      "Life Expectancy:", round(countryData$lifeExp, 2), "years"
+    ))
+  })
+}
+
+shinyApp(ui, server)
+```
+
+

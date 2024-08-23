@@ -1,0 +1,227 @@
+---
+title: "Homework 6"
+output: pdf_document
+---
+
+## Name: Put your name here
+
+## I worked with: 
+
+**Click the "Knit" button in RStudio to knit this file to a pdf.**
+
+--------------------------------------------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE,comment=NULL,message=FALSE, include=TRUE, warning = FALSE)
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(ggthemes)
+theme_set(theme_stata(base_size = 10))  # for nice looking plots
+library(rvest)
+library(tidytext)
+library(tidyr)
+library(purrr)
+library(polite)
+library(tidytext)
+library(plotly)
+```
+
+
+## Problem 1: Crimes
+
+Scrape the table of data found at https://en.wikipedia.org/wiki/List_of_United_States_cities_by_crime_rate and create a plot showing property crime rate (total property crime) vs. violent crime rate (total violent crime).  Identify outlier cities by using a plotting command similar to the one below. (Don't blindly use this without thinking about the column names.)
+
+```{r, eval = FALSE}
+ggplot(crimes, aes(x = violent_crime, y = property_crime, label = city)) +
+    geom_point() +
+    geom_text(
+      data = filter(crimes, violent_crime > 1500 | property_crime > 6500), 
+      check_overlap = TRUE, size = 2.5, nudge_y = 40
+    )
+```
+
+
+
+------------------------------------------------
+
+
+
+## Problem 2: Movie scraping
+
+```{r}
+url <- "https://www.boxofficemojo.com/chart/ww_top_lifetime_gross/?offset=0&area=XWW"
+```
+
+
+### a. 
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+### c. 
+
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+
+
+### d. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+
+### e. 
+
+```{r}
+temp_url <- "https://www.boxofficemojo.com/chart/ww_top_lifetime_gross/?offset=#&area=XWW"
+```
+
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+
+### f. 
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+## Problem 3: Penguins
+
+```{r}
+library(shiny)
+ui <- fluidPage(
+  plotOutput("plot", height = 500)
+)
+
+server <- function(input, output){
+  output$plot <- renderPlot({
+    g <- ggplot(penguins, aes(x = bill_length_mm, y = body_mass_g)) 
+    g + geom_point()
+  })
+}
+
+# you can modify the height to avoid scrolling
+shinyApp(ui, server, options = list(height = 600))
+```
+
+
+### a. 
+
+*answer:*
+
+```{r}
+
+```
+
+
+### b. 
+
+*answer:*
+
+```{r}
+
+```
+
+
+
+### c. 
+
+
+*answer:*
+
+```{r}
+
+```
+
+
+
+
+### d. 
+
+*answer:*
+
+```{r}
+
+```
+
+
+------------------------------------------------
+
+
+
+## Problem 4: Storm paths
+
+
+```{r}
+ctry <- map_data("world", 
+                 region = c(
+                   "usa",
+                   "mexico",
+                   "canada",
+                   "uk"
+                 ))
+base_map <- ggplot(ctry) +  
+  geom_polygon(aes(x = long,  y = lat, group = group)) + 
+  labs( 
+    x = "longitude", 
+    y = "latitude", 
+    title = "Atlantic storms paths"
+    )  
+
+base_map + 
+  geom_path(data = storms, aes(x = long, y = lat, group = name), color = "red") +  
+  coord_map(xlim  = c(min(storms$long), max(storms$long)),
+            ylim  = c(min(storms$lat), max(storms$lat)))
+```
+
+### a.
+
+
+*answer:*
+
+```{r}
+
+```
+
+
+### b. 
+
+*answer:*
+
+```{r}
+
+```
+
+

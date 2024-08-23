@@ -1,0 +1,154 @@
+---
+title: "Class Activity 24"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+format:
+  html:
+    df_print: paged
+    editor: visual
+execute: 
+  eval: true
+  echo: true
+  warning: false
+  error: true
+---
+
+```{r setup, include=FALSE}
+# load the necessary libraries
+library(tidyverse) 
+library(ggthemes)
+library(janitor)
+library(broom)
+library(mlbench)
+library(tidymodels)
+library(probably)
+
+select <- dplyr::select
+theme_set(theme_stata(base_size = 10))
+
+data(PimaIndiansDiabetes2)
+db <- PimaIndiansDiabetes2
+db <- db %>% drop_na()  %>% 
+  mutate(diabetes = fct_relevel(diabetes, c("neg", "pos"))) # Relevels 'diabetes' factor to ensure 'neg' comes before 'pos'
+```
+
+\vspace*{1in}
+
+## Group Activity 1
+
+In this activity, we will calculate the probability of diabetes for a glucose level of 150 mg/dL using the logistic regression coefficients $\beta_0 = -5.61$ and $\beta_1 = 0.0392$.
+
+### a. Calculate Log Odds
+
+First, calculate the log odds for a glucose level of 150 mg/dL.
+
+```{r}
+
+```
+
+### b. Convert Log Odds to Odds
+
+```{r}
+
+```
+
+### c. Convert Odds to Probability
+
+Finally, convert the odds to probability.
+
+```{r}
+
+```
+
+The probability of having diabetes at a glucose level of 150 mg/dL is calculated to be
+
+------------------------------------------------------------------------
+
+## Group Activity 2
+
+a.  Let's fit the logistic regression model to predict the `diabetes` status given the `glucose` level.
+
+```{r}
+set.seed(12345)
+db_single <- db %>% select(_____, ______)
+db_split <- initial_split(db_single, prop = 0.80)
+
+# Create training data
+db_train <- db_split %>% training()
+
+# Create testing data
+db_test <- db_split %>% testing()
+
+fitted_logistic_model <- logistic_reg() %>% # Call the model function
+        # Set the engine/family of the model
+        set_engine() %>%
+        # Set the mode
+        set_mode() %>%
+        # Fit the model
+        fit()
+
+tidy(fitted_logistic_model)
+```
+
+b.  We are interested in predicting the `diabetes` status of patients depending on the amount of `glucose`. Verify that the `glucose` value of 143.11 gives the probability of having `diabetes` as 1/2.
+
+$$log\left(\frac{p}{1-p}\right)  = \beta_0 + \beta_1x$$ *Answer:*
+
+c.  What value of glucose is needed to have a probability of diabetes of 0.75?
+
+*Answer:*
+
+d.  Make a classifier that classifies the diabetes status of new patients with a threshold of 0.5, i.e, a new patient is classified as negative if the estimated class probability is less than 0.75. Also, create a confusion matrix of the resulting predictions. Evaluate the model based on accuracy, sensitivity, specificity, and ppv.
+
+```{r}
+# Prediction Probabilities
+
+pred_prob <- predict(,  new_data = ,   type = )
+
+db_results <- db_test %>% bind_cols(pred_prob) %>%
+  mutate(.pred_class = make_two_class_pred(.pred_neg, levels(diabetes), threshold = .55)) %>%
+  select(diabetes, glucose, contains(".pred"))
+
+
+db_results %>%  
+  conf_mat(diabetes,.pred_class) %>% 
+  autoplot(type = "heatmap")
+
+# Evaluating the model
+eval_metrics <- metric_set(accuracy, sensitivity, specificity, ppv)
+
+eval_metrics(data = db_results,
+             truth = diabetes,
+             estimate = .pred_class) %>% select(-2) 
+```
+
+e.  Generate a ROC Curve and Determine the Optimal Threshold: Evaluate the performance of your diabetes prediction model by plotting a ROC curve. Use the curve to identify the point that is closest to the top-left corner (maximizing sensitivity and minimizing 1 - specificity), and back-calculate to find the corresponding optimal threshold. This threshold represents the best balance between sensitivity (true positive rate) and specificity (false positive rate).
+
+```{r}
+library(yardstick)
+
+# Predict probabilities on the test set
+diabetes_prob <- predict(fitted_logistic_model, db_test, type = "prob")
+diabetes_results <- db_test %>% 
+  select(diabetes) %>%
+  bind_cols(diabetes_prob)
+
+# Generate ROC curve data
+roc_data <- roc_curve()
+
+
+# Plot the ROC curve
+roc_plot <- ggplot(roc_data, aes(x = , y = )) +
+  geom_line() +
+  geom_abline(linetype = "dashed", color = "gray", slope = 1) +
+  theme_minimal() +
+  labs(title = "ROC Curve", x = "1 - Specificity (False Positive Rate)", y = "Sensitivity (True Positive Rate)")
+roc_plot
+
+# Identify the closest point to the top-left corner
+optimal_point <- roc_data %>%
+  mutate(distance = sqrt((1 - specificity)^2 + (sensitivity - 1)^2)) %>%
+  arrange(distance) %>%
+  slice(1)
+optimal_point
+```

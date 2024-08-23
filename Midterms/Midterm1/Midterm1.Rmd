@@ -1,0 +1,361 @@
+---
+title: "Midterm I"
+subtitle: "Stat 220: Spring 2024"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, warning = FALSE, 
+                      message=FALSE, include=TRUE, 
+                      fig.align = "center")
+library(gapminder)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(forcats)
+library(ggthemes)
+library(tidyr)
+library(tidyverse)
+select <- dplyr::select
+theme_set(theme_stata(base_size = 10))
+```
+
+
+
+
+<center>  
+Name:        
+</center> 
+
+<br>
+
+## Total Points: 100  
+
+<br>
+<br>
+
+
+
+#
+
+
+## Q1 Consider the following objects and determine what each of the code snippets evaluates to. Briefly explain your answers.
+
+
+```{r}
+x <- -2:2
+y <- c(FALSE, factor(c("b", "NA")), 3, NA)
+z <- list(z1 = x, 
+          z2 = y, 
+          z3 = c("Carleton", "College"), 
+          z4 = matrix(1:9, nrow = 3))
+```
+
+
+### (a)
+
+
+```{r, eval=FALSE}
+stringr::str_flatten(z[[3]], collapse = " ")
+```
+
+\vspace*{1in}
+
+
+### (b)
+
+
+```{r, eval=FALSE}
+z[[2]] - z[[1]]
+```
+
+\vspace*{1.8in}
+
+
+
+
+## Q2 You are provided with a dataset containing simulated data representing properties' prices, square footage, and construction years. The dataset is designed to reflect realistic property characteristics:
+
+- Square Footage (`sqft`): This variable is generated using the `runif` function to produce 100 random numbers following a uniform distribution, specifically ranging from 1000 to 2000 square feet.
+
+- Construction Year (`year`): This variable lists the years properties were constructed, sampled uniformly from 1970 to 2020.
+
+- Price (`price`): The price of each property is generated using the `rnorm` function, which produces 100 random numbers following a normal distribution. The mean price is set with a formula based on both the year of construction and the square footage, calculated as $\$ 10,000$ plus $\$ 10,000$ for every year past 1970 and an additional $\$ 500$ for each square foot over 1000. The standard deviation is set at $\$ 50,000$, indicating variability in property prices due to factors not included in our simple model.
+
+```{r}
+set.seed(123) # for reproducibility
+data <- tibble(
+  year = sample(1970:2020, 100, replace = TRUE),
+  sqft = runif(100, 1000, 2000),  
+  price = rnorm(100, 
+                mean = 10000 + (year - 1970) * 10000 + (sqft- 1000) * 500, 
+                sd = 50000)
+)
+
+head(data) # first 6 rows of the dataset
+```
+
+
+### (a) Write code to add a new column called `decade` to this dataset that records the decade of each year, make it a factor, and store it in `data_new`. A decade should be represented as the first year of the decade (e.g., 1980 for any year from 1980 to 1989).
+
+
+```{r, eval=FALSE, echo=FALSE}
+data_new <- data %>%
+  mutate(decade = factor(floor((year - 1970) / 10) * 10 + 1970))
+```
+
+
+```{r}
+data %>% mutate(decade = str_c(str_extract(year, "^\\d{3}"), 0)) %>% mutate(decade = factor(decade))
+```
+
+
+```{r, eval=TRUE, echo=FALSE}
+data_new <- data %>%
+  mutate(decade = factor(floor((year - 1970) / 10) * 10 + 1970))
+```
+
+\vspace*{1.8in}
+
+### (b) Fill in the missing parts of a `ggplot2` code snippet to create a time trend plot that displays the trend of property prices over the years. (Refer to the plot on the next page!)
+
+
+
+```{r, echo=TRUE, eval=FALSE}
+ggplot(data_new, aes(x = _______________, y = _____________)) +
+  geom_line(_______________________) +  
+  geom_point(___________________, ______________________, __________________) +  
+  labs(title = "________________________________",
+       x = "__________________",
+       y = "_________________") +
+  theme_minimal()  
+```
+
+
+```{r, echo=FALSE, eval=TRUE}
+ggplot(data_new, aes(x = year, y = price)) +
+  geom_line(color = "blue") +  
+  geom_point(color = "red", alpha = 0.5, size = 3) +  
+  labs(title = "Time Trend of Property Prices",
+       x = "Year of Sale",
+       y = "Price (USD)") +
+  theme_minimal()  
+```
+
+
+
+ 
+### (c) Write code to create a scatter plot using `ggplot2` that displays property prices against square footage. Fit a linear model to these data points and color-code the points based on the decade of sale. Fill in the details in the provided code snippet. 
+ 
+  
+```{r, echo=FALSE}
+ggplot(data_new, aes(x = sqft, y = price, color = decade)) +
+  geom_point() +
+  geom_smooth(method = "lm", se =0) +
+  labs(title = "Property Price vs. Square Footage by Decade",
+       x = "Square Footage",
+       y = "Price (USD)",
+       color = "Decade") +
+  theme_minimal()
+```
+ 
+ 
+ 
+
+```{r, eval=FALSE}
+ggplot(data_new, aes(x = _________, y = ________, color = _______)) +
+  geom_point() +
+  geom_smooth(method = "_____________", se = __________) +
+  labs(title = "_____________________________________",
+       x = "__________________________",
+       y = "_________________________",
+       color = "______________") +
+  theme_minimal()
+```
+ 
+
+ 
+ 
+### (d) Calculate the mean price and standard error of the price for each decade using the `data_new` data object from part (a) and store it in `stats_by_decade`, which contains information about property prices and the decade of sale. Remember, the formula for standard error is $\mathrm{SE}=\frac{\mathrm{SD}}{\sqrt{n}}$, where $n$ is the number observations in each group.
+
+
+
+```{r, eval=FALSE, echo=FALSE}
+# Compute mean and standard error of price per decade
+stats_by_decade <- data_new %>%
+  group_by(decade) %>%
+  mutate(
+    mean_price = mean(price, na.rm = TRUE),
+    se_price = sd(price, na.rm = TRUE) / sqrt(n())
+  ) %>% ungroup()
+```
+
+
+```{r, eval=TRUE, echo=FALSE}
+# Compute mean and standard error of price per decade
+stats_by_decade <- data_new %>%
+  group_by(decade) %>%
+  summarise(
+    mean_price = mean(price, na.rm = TRUE),
+    se_price = sd(price, na.rm = TRUE) / sqrt(n())
+  ) %>% ungroup()
+```
+
+```{r}
+stats_by_decade <- data_new %>%
+  mutate(
+    mean_price = mean(price, na.rm = TRUE, .by = decade),
+    se_price = sd(price, na.rm = TRUE) / sqrt(n()), .by = decade) %>% 
+  ungroup()
+  
+```
+
+
+
+\vspace*{2in}
+
+### (e) Complete the following code to produce a ribbon plot using the `stats_by_decade` from part (d), which includes the mean and standard error of property prices per decade. Ensure that you transform the decade variable to numeric for appropriate plotting, include a ribbon representing the confidence interval within ±2 standard errors of the mean, and add points and lines connecting the means at each decade. (Refer to the plot on the next page!)
+
+
+
+```{r, eval=FALSE}
+stats_by_decade %>%
+  _________(decade = _________(decade)) %>%
+  ggplot(______(x = ___________, y = ____________)) +
+  geom_ribbon(______(ymin = _______ - 2 * _______, ymax = _______ + 2 * _______), 
+              fill = "_____", alpha = _______) +
+  geom_line(____________) +
+  geom_point(_________, size = _______) +
+  labs(title = "_______________________________",
+       x = "__________",
+       y = "__________",
+       caption = "______________________________________") +
+  theme_minimal()
+
+```
+
+
+
+```{r, eval=TRUE, echo=FALSE}
+stats_by_decade %>%
+  mutate(decade = as.double(as.character(decade))) %>%
+  ggplot(aes(x = decade, y = mean_price)) +
+  geom_ribbon(aes(ymin = mean_price - 2 * se_price, ymax = mean_price + 2 * se_price), 
+              fill = "gold", alpha = 0.5) +
+  geom_line(color = "blue") +
+  geom_point(color = "green", size = 3) +
+  labs(title = "Decadal Mean House Prices with Confidence Interval",
+       x = "Decade",
+       y = "Mean Price (USD)",
+       caption = "The ribbon represents ±2 SE from the mean.") +
+  theme_minimal()
+```
+
+
+
+## Q3
+
+### (a) Given a vector of date strings formatted as `ddmmyyyy` below, convert these strings into UTC date-time objects using the `lubridate` package, and then calculate the duration between each consecutive date in days.
+
+
+```{r}
+library(lubridate)
+dates <- c("01012023", "15032024")
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+dd <- lubridate::dmy(dates, tz = "UTC")
+dd
+
+as.duration(interval(dd[1], dd[2]))/ddays(1) # method 1
+time_length(interval(dd[1], dd[2]), unit = "days") # method 2
+```
+
+
+```{r}
+dmy(dates) %>% interval(lag(.), .) / ddays(1)
+time_length(dd[2]- dd[1], unit = "days")
+```
+
+
+\newpage
+
+### (b) You are provided with a factor variable `experience` with levels representing professional experience: "Entry", "Mid", "Senior". Reverse the order of these levels to reflect descending order of experience and store it inside `experience_reversed`.
+
+```{r}
+library(forcats)
+experience <- factor(c("Entry", "Mid", "Senior"), 
+                     levels = c("Entry", "Mid", "Senior"))
+```
+
+
+```{r}
+fct_relevel(experience, c("Senior", "Mid", "Entry"))
+```
+
+
+\
+
+
+\
+
+
+\
+
+
+```{r, echo=FALSE, eval=FALSE}
+experience_reversed <- fct_rev(experience)
+levels(experience_reversed)
+```
+
+
+### (c) Write a function called `prepend_level` that takes any vector of factor levels and prepends the text "Level: " to each level description. This function should be applicable to any factor levels, making it versatile for various data scenarios.
+
+
+```{r, echo=FALSE, eval=FALSE}
+prepend_level <- function(levels_vector) {
+  stringr::str_c("Level: ", levels_vector)
+}
+
+
+experience
+prepend_level(experience)
+```
+
+
+```{r}
+prepend_level <- function(levels_vector) {
+  stringr::str_glue("Level: {levels_vector}")
+}
+
+prepend_level1 <- function(fctr){
+  fct_relabel(fctr, ~ str_c("Level: ", .x))
+}
+prepend_level1(experience_reversed)
+```
+
+
+\
+
+
+\
+
+
+\
+
+\
+
+\newpage
+
+### (d) **(Bonus)** What does the following code chunk do? Here, assume `prepend_level` is the same function that you devised in part (c) and `experience_reversed` is the same object that you defined in part (b) above. (5 points)
+
+```{r, echo=TRUE, eval=FALSE}
+forcats::fct_relabel(experience, prepend_level)
+```
+
+
+
+
+

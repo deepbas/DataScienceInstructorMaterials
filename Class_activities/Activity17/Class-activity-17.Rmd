@@ -1,0 +1,118 @@
+---
+title: "Class Activity 17"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      size = "small", 
+                      collapse = TRUE, 
+                      comment = NA, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      error = TRUE,
+                      eval = FALSE) # change it to TRUE
+
+# load the necessary libraries
+library(tidyverse)
+library(stringr)
+library(purrr)
+library(ggthemes)
+library(rvest)
+library(polite)
+```
+
+
+\vspace*{1in}
+
+
+## Group Activity 1
+
+1. Go to the [the numbers webpage](https://www.the-numbers.com/movie/budgets/all) and extract the table on the front page.
+
+```{r}
+session1 <- 
+
+  
+```
+
+
+2. Find out the number of pages that contain the movie table, while looking for the changes in the url in the address bar. How does the url changes when you go to the next page?
+
+*Answer:*
+
+
+3. Write a for loop to store all the data in multiple pages to a single data frame.
+
+```{r}
+new_urls <- "https://www.the-numbers.com/movie/budgets/all/"
+
+# creating two empty data-frames
+
+table_new <-data.frame()
+df2 <- data.frame()
+
+
+idx <-  seq(__, ___, ___)
+
+for (i in 1:length(idx)) {
+  new_webpage <- 
+  table_new <- html_____(new_webpage)[[1]] %>% 
+  tibble::as_tibble(.name_repair = "unique") 
+  df2 <- rbind(df2, table_new)
+}
+```
+
+
+```{r, eval=FALSE}
+# alternate using map
+df3 <- data.frame()
+
+
+# alternate using lapply
+
+```
+
+
+4. Display the data table using `knitr::kable(data, format = "html")`
+
+```{r}
+
+```
+
+
+5. Store the data in a `.csv` file with `write_csv(data_object, "/path/name.csv")`
+
+```{r}
+
+```
+
+
+## Group Activity 2
+
+```{r}
+mca <- data.frame(percent = c(23.5, 34.7, 19.8, 22.0, 27.6, 32.1, 20.2, 20.2, 26.0, 30.7, 22.1, 21.1), 
+                  portfolio = factor(rep(c("Commodities", "Stocks", "Real State", "Other Assets"), 3), 
+                                     levels=c("Commodities", "Stocks", "Real State", "Other Assets")), 
+                  year = rep(c("2020","2021","2022"), each=4))
+glimpse(mca)
+head(mca,6)
+```
+
+### a. Make an interactive bar plot showiung the distribution of the various portfolio allocation for each year in a side-by-side format. Hint: use `fill = portfolio` as one of your aesthetics.
+
+```{r}
+library(plotly)
+mybar <- ggplot(mca, aes(x=   , y=    , fill=    )) + 
+  labs(title="Investment Portfolio") +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme(legend.position = "bottom") + 
+  scale_fill_wsj()
+ggplotly(mybar) 
+```
+

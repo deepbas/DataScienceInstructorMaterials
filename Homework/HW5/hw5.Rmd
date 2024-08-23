@@ -1,0 +1,238 @@
+---
+title: "Homework 5"
+output: pdf_document
+---
+
+## Name: Put your name here
+
+## I worked with: 
+
+**Click the "Knit" button in RStudio to knit this file to a pdf.**
+
+--------------------------------------------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, 
+                      warning = FALSE, message = FALSE)
+# add packages here 
+library(readr)
+library(tidyverse)
+```
+
+
+
+## Problem 1: Regular expression 
+
+### a. 
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+### c. 
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+### d. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+
+### e. 
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+------------------------------------------------
+
+## Problem 2: Energy autocorrelation
+
+### a. 
+
+```{r}
+energy <- readr::read_csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/energy.csv",
+                    col_type = cols(
+                     .default = col_double(), 
+                      Timestamp = col_datetime(format = ""),
+                      dayWeek = col_factor(levels=c("Mon","Tues","Wed","Thurs","Fri","Sat","Sun"))
+                     ))
+
+```
+
+
+```{r}
+x <- energy %>% 
+  arrange(Timestamp) %>%    # making sure sorted by time
+  pull("Olin_Hall_of_Science")
+acf_out <- acf(
+  x,   # time series
+  na.action = na.pass,    # skips over NAs
+  lag.max = 4,   # max lag
+  plot = FALSE)   # don't plot
+acf_out
+acf_out$acf   # autocorr values
+acf_out$lag   # lag values
+```
+
+### a. 
+
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+### c. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+### d. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+------------------------------------------------
+
+
+## Problem 3: weather
+
+### a. 
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+### b. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+### c. 
+
+
+```{r}
+# e.g. named vector with names x and y and values 1 and 2
+c(x = 1, y = 2)
+```
+
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+### d. 
+
+*answer:* write your answer here
+
+```{r}
+# put your code here
+```
+
+
+
+### e. 
+
+*answer:* 
+
+```{r}
+# put your code here
+```
+
+
+
+------------------------------------------------------------------------
+
+## Problem 4: 
+
+```{r}
+#install.packages("titanic")
+library(titanic)
+set.seed(12233)
+df = tibble(titanic_train)  #load dataset
+```
+
+### a. 
+
+*answer:*
+
+```{r}
+
+```
+
+
+### b. 
+
+*answer:*
+
+```{r}
+
+```
+
+### c.  
+
+*answer:*
+
+```{r}
+
+```
+
+
+### d. 
+
+*answer:*
+
+```{r}
+
+```
+
+
+

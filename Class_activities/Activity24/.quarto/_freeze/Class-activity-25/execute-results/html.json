@@ -1,0 +1,17 @@
+{
+  "hash": "b12a3807faf70ee11822ce3a8236ca2f",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Class Activity 25\"\nauthor: \"Your name here\"\ndate: \" May 23 2024\"\nformat:\n  html:\n    df_print: paged\n    editor: visual\nexecute: \n  eval: true\n  echo: true\n  warning: false\n  error: true\n---\n\n\n\n\n\n## Group Activity 1\n\nLet's look at the following data tibble that randomly creates some `x-` and `y-` coordinates around the cluster centroids that we just saw in class. Please answer the questions based on this data.\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nset.seed(1234)\n\nmy_df <- tibble(\n  X1 = rnorm(n = 120, mean = rep(c(2, 4, 7.33), each = 40)),\n  X2 = rnorm(n = 120, mean = rep(c(6.33, 3, 6), each = 40))\n)\n\nmy_df %>%\n  ggplot(aes(X1, X2)) +\n  geom_point() \n```\n\n::: {.cell-output-display}\n![](Class-activity-25_files/figure-html/unnamed-chunk-1-1.png){width=672}\n:::\n\n```{.r .cell-code}\nmy_df <- my_df %>% mutate(across(where(is.numeric), standardize))\n```\n:::\n\n\n\n\na. How many clusters can you identify in the data?\n\n*Answer:*\n\n\nb. Fit `kmeans` algorithm to the data picking the number of clusters you previously identified in part `a`.\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nset.seed(1234) # for reproducibility\n```\n:::\n\n\n\n\nc.  Add the cluster association to the dataset and make a scatter plot color-coded by the cluster association.\n\n\n\n::: {.cell}\n\n:::\n\n\n\nd. Repeat parts `b-c` for identifying more number of clusters than what you picked in part a.\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\n# repeat b\n```\n:::\n\n::: {.cell}\n\n```{.r .cell-code}\n# repeat c\n```\n:::\n\n\n\n\ne. Aggregate the total within sum of squares for a grid of `k` from 1 to 15 to the data table `multi_kmeans`.\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nmulti_kmeans <- tibble(k = _____) %>%\n  mutate(\n    model = purrr::map(k, ~ kmeans(_____, centers = .x, nstart = 25)),\n    tot.withinss = purrr::map_dbl(_____, ~ glance(.x)$tot.withinss)\n  )\n```\n\n::: {.cell-output .cell-output-error}\n\n```\nError: <text>:1:29: unexpected input\n1: multi_kmeans <- tibble(k = __\n                                ^\n```\n\n\n:::\n:::\n\n\n\n\nf. Make an elbow plot modifying the code below:\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nmulti_kmeans %>%\n  ggplot(aes(___,_____)) +\n  geom_point() +\n  geom_line() +\n  scale_x_continuous(breaks = 1:15) \n```\n\n::: {.cell-output .cell-output-error}\n\n```\nError: <text>:2:15: unexpected input\n1: multi_kmeans %>%\n2:   ggplot(aes(__\n                 ^\n```\n\n\n:::\n:::\n\n\n\n\ng. After picking an optimal number of cluster, use the in-built function in the `factoextra` package to construct the final cluster plot.\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nset.seed(1234)\nkmeans.final <- kmeans(my_df, 5, nstart = 25)\nfviz_cluster(_______, data = ______, ggtheme = theme_stata())\n```\n\n::: {.cell-output .cell-output-error}\n\n```\nError: <text>:3:15: unexpected input\n2: kmeans.final <- kmeans(my_df, 5, nstart = 25)\n3: fviz_cluster(__\n                 ^\n```\n\n\n:::\n:::\n",
+    "supporting": [
+      "Class-activity-25_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

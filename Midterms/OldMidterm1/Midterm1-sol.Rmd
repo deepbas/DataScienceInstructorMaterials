@@ -1,0 +1,414 @@
+---
+title: "Stat 220: Midterm I"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(comment=NA, fig.align = 'center', fig.height = 3, fig.width = 4)
+knitr::opts_chunk$set(echo = TRUE, size = "small", collapse=TRUE, comment=NA, warning = FALSE, message = FALSE)
+
+library(gapminder)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(forcats)
+library(ggthemes)
+library(tidyr)
+data("gapminder")
+select <- dplyr::select
+theme_set(theme_minimal())
+```
+
+<center>  
+Name:        
+</center> 
+
+\vspace*{0.5in}
+
+## Total Points: 100   
+
+<br>
+<br>
+
+\vspace*{0.5in}
+
+
+## `Gapminder` data
+
+Data includes health and income outcomes for 142 countries from 1952 to 2007 in increments of 5 years. The variables in the dataset are `country`, `continent`, `year`, `lifeExp`, `pop`, and `gdpPercap`. The descriptions for the variables are:
+
+  - `country` : name of the country, factor with 142 levels
+  - `continent`: name of the continent, factor with 5 levels
+  - `year` : ranges from 1952 to 2007 in increments of 5 years (12 distinct years)
+  - `lifeExp`: life expectancy at birth, in years
+  - `pop` : population
+  - `gdpPercap` : GDP per capita (US$\$$, inflation-adjusted)
+
+
+\vspace*{0.5in}
+
+
+```{r}
+glimpse(gapminder)
+```
+
+The distinct continents in the data are as follows:
+
+```{r}
+gapminder %>% pull(continent) %>% unique()
+```
+
+
+#
+
+\newpage
+
+## Part 1: Data Wrangling *(10 points each)*
+
+**What do the following code chunks do?** Provide a thorough and intuitive (2-3 sentences) description of the output from each of the following R chunks. The chunks produce a new data set. Please give the dimensions in addition to your description.  Write your descriptions in regular English, without using variable names.
+
+
+### a. 
+
+
+```{r, echo=FALSE, eval=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  group_by(country) %>%
+  summarize(median_lifeExp = median(lifeExp)) 
+```
+
+
+```{r, eval=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  group_by(country) %>%
+  summarize(median_lifeExp = median(lifeExp)) 
+```
+
+\vspace*{2.5in}
+
+
+### b.
+
+```{r, eval=FALSE}
+gapminder %>%
+  group_by(country) %>%
+  arrange(year) %>%
+  mutate(change_in_lifeExp = lifeExp - lag(lifeExp)) %>%
+  summarize(average_change = mean(change_in_lifeExp, na.rm = TRUE))
+```
+
+\vspace*{2.5in}
+
+
+```{r, echo=FALSE, eval=FALSE}
+gapminder %>%
+  group_by(country) %>%
+  arrange(year) %>%
+  mutate(change_in_lifeExp = lifeExp - lag(lifeExp)) %>%
+  summarize(average_change = mean(change_in_lifeExp, na.rm = TRUE))
+```
+
+
+### c. 
+
+```{r, eval=FALSE}
+set.seed(143)
+selected_countries <- gapminder %>%
+  distinct(country) %>%
+  slice_sample(n = 3) %>%
+  pull(country)
+
+gapminder %>%
+  filter(country %in% selected_countries) %>%
+  filter(year == 2007) %>%
+  group_by(country) %>%
+  summarize(median_lifeExp = median(lifeExp))
+```
+
+\vspace*{5in}
+
+
+```{r, echo=FALSE, eval=FALSE}
+set.seed(143)
+selected_countries <- gapminder %>%
+  distinct(country) %>%
+  slice_sample(n = 3) %>%
+  pull(country)
+
+gapminder %>%
+  filter(country %in% selected_countries) %>%
+  filter(year == 2007) %>%
+  group_by(country) %>%
+  summarize(median_lifeExp = median(lifeExp))
+```
+
+
+\newpage
+
+### d. 
+
+
+```{r, eval=FALSE}
+set.seed(143)
+gapminder %>%
+  filter(continent == "Europe") %>%
+  slice_sample(n = 3) %>%
+  select(country) %>%
+  inner_join(gapminder, by = "country") %>%
+  group_by(country, year) %>%
+  summarize(avg_gdpPercap = mean(gdpPercap)) %>%
+  pivot_wider(names_from = year, 
+              values_from = avg_gdpPercap, 
+              names_prefix = "year_")
+```
+
+\vspace*{3in}
+
+
+```{r, echo=FALSE, eval=FALSE}
+set.seed(143)
+gapminder %>%
+  filter(continent == "Europe") %>%
+  slice_sample(n = 3) %>%
+  select(country) %>%
+  inner_join(gapminder, by = "country") %>%
+  group_by(country, year) %>%
+  summarize(avg_gdpPercap = mean(gdpPercap)) %>%
+  pivot_wider(names_from = year, 
+              values_from = avg_gdpPercap, 
+              names_prefix = "year_")
+```
+
+
+\newpage
+
+## Part 2: Graphics *(5 points each)*
+
+
+### a. The density plot below visualizes the distribution of life expectancy across different continents in the year 2007. Suggest 2 ways to improve this plot's aesthetics and readability. Write just the code modifications below:
+
+
+```{r, out.width="80%", fig.width=5.6}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot(aes(x = lifeExp, color = continent)) + 
+  geom_density(alpha = 1) 
+
+```
+
+*Answer:*
+
+
+\vspace*{3in}
+
+
+
+```{r, eval=FALSE, echo=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot(aes(x = lifeExp, color = continent)) + 
+  geom_density(aes(size = lifeExp))
+```
+
+
+
+
+
+
+\newpage
+
+
+
+### b. Linear Model Plot Modification
+ 
+Please suggest how you would modify the plot to color code the points by continent and make the smoother line purple. You don't need to provide a code from scratch. Just write the suggested changes.
+
+
+```{r, eval=FALSE}
+gapminder %>%
+  filter(year == 2007, continent == "Europe") %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() +
+  geom_smooth()
+```
+
+
+```{r, echo=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point(aes(color = continent)) +
+  geom_smooth()
+```
+
+
+\vspace*{2in}
+
+### c. Ribbon Plot 
+
+The ribbon plot below is designed to display the range of one standard deviation above and below the mean for GDP per capita over time in Asia. To complete the code, fill in the necessary parts.
+
+
+```{r eval=FALSE}
+gapminder %>%
+  filter(continent == "Asia") %>%
+  ##### FILL IN i. #####
+  summarize(avg_gdpPercap = mean(gdpPercap)) %>%
+  ggplot(aes(x = year, y = avg_gdpPercap)) +
+  geom_ribbon(aes(ymin = avg_gdpPercap - sd(avg_gdpPercap), 
+                  ymax = avg_gdpPercap + 2*sd(avg_gdpPercap)), alpha = 0.2) +
+  geom_line()
+```
+
+
+
+```{r, echo=FALSE}
+gapminder %>%
+  filter(continent == "Asia") %>%
+  group_by(continent, year) %>%
+  summarize(avg_gdpPercap = mean(gdpPercap)) %>%
+  ggplot(aes(x = year, y = avg_gdpPercap)) +
+  geom_ribbon(aes(ymin = avg_gdpPercap - sd(avg_gdpPercap), ymax = avg_gdpPercap + sd(avg_gdpPercap)), alpha = 0.2) +
+  geom_line()
+```
+
+\vspace*{2in}
+
+
+### d. Faceted Density Plot
+
+Complete the following code to create a faceted density plot showing the distribution of population for each continent in 2007.
+
+```{r, eval=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot(aes(x = pop)) +
+  geom_density() +
+  ##### FILL IN i. #####
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+gapminder %>%
+  filter(year == 2007) %>%
+  ggplot(aes(x = pop)) +
+  geom_density() +
+  facet_wrap(~continent)
+```
+
+\vspace*{1.5in}
+
+
+\newpage
+
+
+## Part 3: Data Objects *(5 points each)*
+
+
+```{r}
+x <- c(7, 5, 3, 9)
+y <- c(FALSE, factor(c("cellar", "wine")), 2)
+z <- list(z1 = x, 
+          z2 = y,
+          z3 = c("Pumpkin", "Spice"), 
+          z4 = matrix(10:18, nrow = 3),
+          z5 = list(a = 20, b = "door"))
+```
+
+
+Consider the above objects to answer the following questions.
+
+### (a) What does the following evaluate to?
+
+
+```{r, eval=FALSE}
+z[["z5"]][["b"]]
+```
+
+
+\vspace*{0.8in}
+
+
+### (b) What does the following evaluate to?
+
+
+```{r, eval=FALSE}
+x * 2
+```
+
+\vspace*{0.8in}
+
+
+### (c) What does the following evaluate to?
+
+
+```{r, eval=FALSE}
+x + y
+```
+
+\vspace*{0.8in}
+
+
+
+### (d) Write the code to extract the third column of the `z4` matrix in `z`.
+
+```{r}
+z[["z4"]][,3]
+```
+
+
+\newpage
+
+
+
+## Part 4: What do the following codes/code chunks evaluate to? 
+
+
+### (a)
+
+
+```{r, eval=FALSE}
+library(lubridate)
+time_length(interval(ymd("2000-01-01"), ymd("2005-01-01")), unit = "years")
+```
+
+\vspace*{0.8in}
+
+
+### (b)
+
+```{r, eval=FALSE}
+library(lubridate)
+ymd("2000-01-01") + weeks(1)
+```
+
+\vspace*{0.8in}
+
+
+### (c)
+
+```{r, eval=FALSE}
+library(forcats)
+f <- factor(c("low", "medium", "high"), levels = c("low", "medium", "high"))
+new_order <- c("high", "low", "medium")
+f <- fct_relevel(f, new_order)
+levels(f)
+```
+
+
+\vspace*{0.8in}
+
+### (d)
+
+
+```{r, eval=FALSE}
+library(forcats)
+weather <- factor(c("sunny", "cloudy", "rainy", "snowy"))
+weather <- fct_recode(weather, bright = "sunny", white = "snowy")
+levels(weather)
+```
+
+

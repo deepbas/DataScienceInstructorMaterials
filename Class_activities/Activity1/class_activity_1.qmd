@@ -1,0 +1,85 @@
+---
+title: "Class Activity 1"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+format:
+  pdf: default
+  html:
+    df_print: paged
+editor: visual
+execute: 
+  eval: true
+  echo: true
+  warning: false
+  error: true
+---
+
+The `R` package `babynames` provides data about the popularity of individual baby names from the US Social Security Administration. Data includes all names used at least 5 times in a year beginning in 1880.
+
+```{r}
+#install.packages("babynames")  # uncomment to install
+library(babynames)
+```
+
+Below is the list for first few cases of baby names.
+
+```{r}
+head(babynames)
+```
+
+1.  How many cases and variables are in the dataset `babynames`?
+
+**Answer:**
+
+```{r}
+dim(babynames)
+```
+
+There are `r dim(babynames)[1]` cases and `r dim(babynames)[2]` variables in the dataset `babynames`.
+
+Let's use the package tidyverse to do some exploratory data analysis. `<-` is the assignment operator and `%>%` is the pipe operator. We will slowly learn these in detail later.
+
+```{r}
+#install.packages("tidyverse")   # uncomment to install
+library(tidyverse)
+babynames %>% filter(name=='Aimee')
+filtered_names <- babynames %>% filter(name=='Aimee')
+```
+
+```{r}
+#install.packages("ggplot2")   # uncomment to install
+library(ggplot2)
+```
+
+```{r trend, fig.cap= "A trend chart", tidy=FALSE}
+ggplot(data=filtered_names, aes(x=year, y=prop)) + 
+  geom_line(aes(colour=sex)) + 
+  xlab('Year') + 
+  ylab('Prop. of Babies Named Aimee')
+```
+
+2.  What do you see in the Figure 1? Explain in a few sentences.
+
+**Answer:**
+
+\vspace*{0.5in}
+
+3.  Repeat question 2 to infer how does the proportion of babies with your first name trend over time. Examine the generated plot and describe the trend of your name's popularity over time. Consider the following points:
+
+Has the popularity of your name increased, decreased, or remained stable over the years? Is there a noticeable difference in popularity between sexes? Are there any interesting patterns or trends, such as sudden increases or decreases in popularity?
+
+**Answer:**
+
+\vspace*{0.5in}
+
+```{r}
+# Replace 'YourName' with your first name
+your_name <- "Dee"
+
+your_name_data <- babynames %>% filter(name == your_name)
+
+ggplot(data=your_name_data, aes(x=year, y=prop)) + 
+  geom_line(aes(colour=sex)) + 
+  xlab('Year') + 
+  ylab(paste('Prop. of Babies Named', your_name))
+```

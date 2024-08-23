@@ -1,0 +1,328 @@
+---
+title: "Midterm III Study Guide and Review"
+author: "Deepak Bastola"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+
+## Midterm III Study Guide
+
+Format: In Class with open-ended questions.
+
+One-sided Cheat-sheet allowed (A4 paper) and a basic calculator allowed.
+
+  - You may use a calculator 
+  - You are not permitted to use a laptop or classroom computer. 
+
+### Topics
+
+- The exam covers various machine learning topics including k-nearest neighbor, k-means, decision trees and random forests (through Fri. 11/11)
+ 
+- You will be tested on your conceptual understanding of the machine learning algorithms, the accuracy metrics, and the associated construction of the workflow in R that we have discussed in the class. I will not make you write extremely complicated code from scratch, but be prepared to write small chunks of code. Additional ways I could assess your understanding of R include (but are not limited to):
+
+  - Identifying the error in written code.
+  - Putting lines of code in order to complete a specified task.
+  - Describing the output resulting from a code/code-chunk.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, warning = FALSE, 
+                      message=FALSE, include=TRUE, 
+                      fig.height = 4, fig.width = 5)
+
+
+library(tidyverse) 
+library(tidymodels)
+library(mlbench)     # for PimaIndiansDiabetes2 dataset
+library(yardstick) # extra package for getting metrics
+library(parsnip) # tidy interface to models
+library(ggthemes)
+library(vip)
+library(ISLR)
+library(rpart.plot)
+library(janitor)
+library(ranger)
+
+```
+
+\newpage
+
+
+# Sample Questions
+
+## Q1: Random Forest
+
+The following example uses `Carseats` data from ISLR package to classify the amount of sales (High or Low) depending on certain number of features.
+
+```{r}
+Carseats <- as_tibble(Carseats) %>%
+  mutate(High = factor(if_else(Sales <= 8, "No", "Yes"))) %>% 
+  select(-Sales)
+glimpse(Carseats)
+```
+
+
+#### (a) Roughly, how many observations are in the test and train datasets?
+
+
+*Answer:* 100 and 300, respectively.
+
+
+```{r}
+set.seed(1234)
+Carseats_split <- initial_split(Carseats, prop = 0.75)
+Carseats_train <- training(Carseats_split)
+Carseats_test <- testing(Carseats_split)
+```
+
+
+#### (b) Why do we need to split the data into training and testing set? Explain.
+
+*Answer:*
+
+We need to split the data into training and testing to train the model in a random subset and test the model in a different subset to get an estimate of a final, unbiased assessment of the model’s performance.
+
+
+```{r}
+Carseats_recipe <- recipe(High ~ ., data = Carseats_train) %>%
+ step_dummy(all_nominal(), -all_outcomes()) %>%
+ prep()
+```
+
+
+```{r}
+decision_tree_rpart_spec <- rand_forest(mtry = tune()) %>%  
+  set_engine('ranger', importance = "impurity") %>% 
+  set_mode('classification')
+```
+
+
+#### (c) Explain the role of `tune()` inside the model specification.
+
+*Answer:*
+
+The `tune()` is a placeholder, that will be used to tune the number of predictors that will be randomly sampled at each split when creating the tree models
+
+
+#### (d) The importance plot for this algorithm is shown below. Which two predictors are most important? 
+
+*Answer:* The two most important predictors according to random forest model are `Price` and `ShelveLoc`.
+
+
+```{r, echo=FALSE}
+Carseats_workflow <- workflow() %>% 
+                 add_model(decision_tree_rpart_spec) %>% 
+                 add_recipe(Carseats_recipe)
+
+# Create folds for cross validation on the training data set
+Carseats_folds <- vfold_cv(Carseats_train, v = 5, strata = High)
+
+Carseats_grid <- grid_random(mtry() %>% range_set(c(2, 7)), size = 10)
+
+Carseats_tuning <- Carseats_workflow %>% 
+               tune_grid(resamples = Carseats_folds,
+                         grid = Carseats_grid)
+
+best_tree <- Carseats_tuning %>% 
+             select_best(metric = 'accuracy')
+
+final_tree_workflow <- Carseats_workflow %>% 
+                       finalize_workflow(best_tree)
+
+tree_wf_fit <- final_tree_workflow %>% 
+               fit(data = Carseats_train)
+
+tree_fit <- tree_wf_fit %>% 
+            extract_fit_parsnip()
+
+vip(tree_fit)
+```
+
+
+
+#### (e) Calculate the accuracy metric of this algorithm based on the following confusion matrix.
+
+
+```{r}
+tree_last_fit <- final_tree_workflow %>% last_fit(Carseats_split)
+tree_predictions <- tree_last_fit %>% collect_predictions()
+conf_mat(tree_predictions, truth = High, estimate = .pred_class) 
+```
+
+
+Accuracy:
+
+```{r}
+(46+32)/(46+32+10+12)
+```
+
+
+---------------------------------------------------------------------------------
+
+\newpage
+
+## Q2 : K-nearest neighbor
+
+Let's fit a K-nearest neighbor algorithm using `Smarket` dataset which has daily percentage returns for the S&P 500 stock index between 2001 and 2005.
+
+#### a. Briefly describe what the above set of codes do. Why do we need to split the data into training and test set?
+
+```{r}
+set.seed(1234)
+
+data_Smarket <- as_tibble(Smarket)
+split <- initial_split(data_Smarket, strata = Direction, prop = 4/5)
+Smarket_train <- training(split)
+Smarket_test <- testing(split)
+
+# glimpses of data
+glimpse(Smarket_train)
+glimpse(Smarket_test)
+```
+
+
+*Answer:*
+
+The code creates a variable called "data_Smarket" that takes in the data from Smarket. The initial_split function shuffles, stratifies based on Direction variable, and splits the data using the proportion 4 to 5. Smarket_train fits a model with certain hyper-parameters on a particular subset ofthe dataset
+and Smarket_test tests the model on a different subset of the dataset to get an estimate of a
+final, unbiased assessment of the model's performance
+
+#### b. The following trained model is used to produce a data-frame of the actual and predicted `Direction` in the test dataset. Call this data-frame `Smarket_results`. What information does `Smarket_results` contain? What is the dimension of this dataset? Explain.
+
+#Answer:* `Smarket_results` contains the true labels of the dataset (Direction) and the Direction predicted by the k-nearest neighbor model. The dimension of this dataset is $252 \times 2$ 
+
+```{r}
+Smarket_recipe <- recipe(Direction ~ Lag1 + Lag2 + Lag3 + Year + Volume, 
+                         data = Smarket_train) %>% 
+  step_center(all_predictors()) %>% 
+  step_scale(all_predictors()) %>%
+  prep()
+
+Smarket_knn_spec <- nearest_neighbor(mode = "classification",
+                             engine = "kknn",
+                             weight_func = "rectangular",
+                             neighbors = 5)
+
+Smarket_workflow <- workflow() %>% 
+  add_recipe(Smarket_recipe) %>%
+  add_model(Smarket_knn_spec)
+
+Smarket_fit <- fit(Smarket_workflow, data = Smarket_train)
+
+test_features <- Smarket_test %>% select(Direction, Lag1, Lag2, Lag3, Year, Volume)
+nn1_pred3 <- predict(Smarket_fit, test_features, type = "raw")
+Smarket_results <- Smarket_test %>% 
+  select(Direction) %>% 
+  bind_cols(predicted = nn1_pred3) %>% mutate(Direction = as.factor(Direction))
+```
+
+
+```{r, eval = FALSE, echo=FALSE}
+glimpse(Smarket_results)
+```
+
+
+
+#### c. The following is a confusion matrix from the prediction results from b. Calculate by hand the sensitivity, specificity, accuracy, and positive predictive value of the classifier.
+
+*Answer:* 
+
+
+
+```{r}
+conf_mat(Smarket_results, truth = Direction, estimate = predicted)
+```
+
+
+
+```{r}
+TP <- 72
+TN <- 50
+FP <- 71
+FN <- 58
+n <- TP + TN + FP + FN
+
+ 
+(TP+TN)/n # accuracy
+(TP)/(TP + FN) #sensitivity
+(TN)/(FP+TN) #specificity
+(TP)/(TP+FP) #PPV
+```
+
+
+
+----------------------------------------------------------------------------------
+
+## Q3 Miscellaneous
+
+
+#### (a) Explain the difference between unsupervised learning and supervised learning.
+
+*Answer:* The main difference between supervised and unsupervised learning: Labeled data. The main distinction between the two approaches is the use of labeled datasets. To put it simply, supervised learning uses labeled input and output data, while an unsupervised learning algorithm does not.
+
+
+#### (b) Is feature scaling required for the K-NN algorithm? Explain with proper justification.
+
+*Answer:* Feature scaling is required in K-NN because the calculation of Euclidean distance is influenced by the feature that has more variability.
+
+
+
+#### (c) For two runs of K-Mean clustering is it expected to get same clustering results?
+
+*Answer:* No, due to random initializing points, any two runs of K-means clustering is expected to produce different clustering results.
+
+
+#### (d) Is it possible that assignment of observations to clusters does not change between successive iterations in K-Means?
+
+*Answer:* When the K-Means algorithm has reached the local or global minima, it will not alter the assignment of data points to clusters for two successive iterations.
+
+
+#### (e) (True/False) Precision is a useful metric in cases where False Positive is a higher concern than False Negatives. Provide explanations as well.
+
+*Answer:* True, precision tells us how many of the correctly predicted cases actually turned out to be positive.
+
+
+#### (f) Explain how you can use total within cluster sum of squares to find the "best" choice of K in a K-means clustering algorithm.
+
+*Answer:*
+
+Calculate the Within-Cluster-Sum of Squared Errors (WSS) for different values of k, and choose the k for which WSS becomes first starts to diminish. In the plot of WSS-versus-k, this is visible as an elbow.
+
+
+
+#### (g) Briefly explain why do we preprocess data in k nearest neighbors algorithm.
+
+*Answer:*
+
+ KNN is one of the simplest forms of machine learning algorithms mostly used for classification. It classifies the data point on how its neighbor is classified as KNN classifies the new data points based on the similarity measure of the earlier stored data points. 
+
+
+#### (h) (Multiple Choice) Given the following models trained using K-NN, the model which could result in underfitting will most likely have the value of K as
+
+  1. 30
+  2. 5
+  3. 1
+  
+*Answer:* 30, because a k-NN fit with large number of neighbors smooths out local structure and causes a lack of generalization.
+
+  
+#### (i) Does centroid initialization affect K-means algorithm? Explain your answer.
+
+*Answer:* Yes, it does. It is a random initialization, so depending on where it starts, the algorithm may be trapped in a local maxima.
+
+#### (j) Logistic regression is a machine learning algorithm that is used to predict the probability of a _____? Write your letter choice in the blank.
+
+(A) categorical independent variable
+(B) categorical dependent variable.
+(C) numerical dependent variable.
+(D) numerical independent variable.
+
+*Answer:* B
+
+
+
+

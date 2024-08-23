@@ -1,0 +1,132 @@
+---
+title: "Class Activity 23"
+author: "Your name here"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      size = "small", 
+                      collapse = TRUE, 
+                      comment = NA, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      eval = FALSE,
+                      error = TRUE) # change it to TRUE
+
+# load the necessary libraries
+library(tidyverse) 
+library(tidymodels)
+library(mlbench)     # for PimaIndiansDiabetes2 dataset
+library(janitor)
+library(yardstick)
+library(parsnip)
+library(ggthemes)
+library(forcats)
+
+select <- dplyr::select
+```
+
+
+\vspace*{1in}
+
+
+## Group Activity 1
+
+Load the `mlbench` package to get `PimaIndiansDiabetes2` dataset.
+
+```{r}
+# Load the data - diabetes
+data(PimaIndiansDiabetes2)
+db <- PimaIndiansDiabetes2
+db <- db %>% drop_na() %>% mutate(diabetes = fct_rev(factor(diabetes))) 
+db_raw <- db %>% select(glucose, insulin, diabetes)
+
+```
+
+
+a. Split the data `75-25` into training and test set using the following code. 
+
+```{r}
+set.seed(123)
+
+db_split <- initial_split(db, prop = 0.75)
+
+# Create training data
+db_train <- db_split %>% training()
+
+# Create testing data
+db_test <- db_split %>%  testing()
+```
+  
+  
+b. Follow the steps to train a 7-NN classifier using the `tidymodels` toolkit 
+    
+
+```{r}
+# define recipe and preprocess the data
+db_recipe <- recipe(________, data = db_raw) %>%
+  step_scale(all_predictors()) %>%
+  step_center(all_predictors()) %>%
+  prep()
+```
+    
+
+```{r}
+# specify the model
+db_knn_spec7 <- nearest_neighbor(mode = "classification",
+                             engine = "kknn",
+                             weight_func = "rectangular",
+                             neighbors = ________)
+```
+
+
+```{r}
+# define the workflow
+db_workflow <- workflow() %>% 
+  add_recipe(_________) %>%
+  add_model(_________)
+```
+
+
+```{r}
+# fit the model on the train dataset
+db_fit <- fit(________, data = db_train)
+```
+    
+    
+c. Classify the penguins in the `test` data frame. 
+
+```{r}
+test_features <- db_test %>% select(glucose, insulin) 
+db_pred <- predict(_____, ______)
+
+db_results <- db_test %>% 
+  select(glucose, insulin, diabetes) %>% 
+  bind_cols(predicted = _________)
+
+head(db_results, 6)
+```
+
+
+-----------------------------------------------------------------------------------------------
+
+## Group Activity 2
+
+Calculate the accuracy, sensitivity, specificity, and positive predictive value by hand using the following confusion matrix.
+
+```{r}
+conf_mat(db_results, truth = diabetes, estimate = .pred_class)
+```
+
+\vspace*{3in}
+
+
+
+\newpage
+
+## Class Notes

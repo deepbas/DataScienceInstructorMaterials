@@ -1,0 +1,446 @@
+---
+title: "Midterm 2"
+subtitle: "Stat 220: Spring 2024"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+format:
+  pdf:
+    includes:
+      in-header: header.tex
+execute: 
+  eval: true
+  echo: true
+  warning: false
+  error: true
+---
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(forcats)
+library(stringr)
+library(lubridate)
+```
+
+
+## Your name: 
+
+\vspace*{1in}
+
+# Questions
+
+
+
+
+## Q1 (5 points each)
+
+The Shiny application outlined below is designed to visualize trends in baby names. It enables users to select a year and a gender, and then displays a bar chart of the top 10 most popular baby names for that year and gender.
+
+
+```{r, eval=FALSE}
+library(shiny)
+library(ggplot2)
+library(babynames)
+library(dplyr)
+
+ui <- fluidPage(
+  titlePanel("Baby Names Trends"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("year", "Choose a year:",
+                  choices = unique(babynames$year)),
+      selectInput("gender", "Select gender:",
+                  choices = c("Male" = "M", "Female" = "F")),
+      actionButton("update", "Update Chart")
+    ),
+    mainPanel(
+      plotOutput("namePlot")
+    )
+  )
+)
+
+server <- function(input, output) {
+  filtered_data <- eventReactive(input$update, {
+    babynames %>%
+      filter(year == input$year, sex == input$gender) %>%
+      arrange(desc(n)) %>%
+      head(10) 
+  })
+  output$namePlot <- renderPlot({
+    req(filtered_data())
+    ggplot(filtered_data(), aes(x = reorder(name, n), y = n)) +
+      geom_bar(stat = "identity", fill = "steelblue") +
+      labs(title = "Top 10 Popular Baby Names",
+           x = "Names", y = "Number of Babies") +
+      coord_flip() 
+  })
+}
+shinyApp(ui = ui, server = server)
+```
+
+
+### (a). Considering the need to control computational load in a data-intensive Shiny application, what is the best use of `actionButton` in conjunction with reactive expressions?
+
+A) `actionButton` should only be used to trigger UI updates, such as showing or hiding elements, not for controlling reactive data processes.
+B) Combine `actionButton` with `isolate()` to ensure that reactive expressions are updated without user intervention.
+C) Use `actionButton` to reset user inputs to their default states without affecting any reactive expressions or outputs.
+D) Implement `actionButton` as a method to bypass reactivity and directly manipulate output displays without data reprocessing.
+E) To trigger data processing only after all user inputs have been finalized, using `actionButton` to activate `eventReactive()` computations.
+
+
+
+### (b). Which statement best describes the roles and differences between `eventReactive`, `observe`, and `renderPlot` in managing the app's reactivity and user interactions?
+
+
+A) `renderPlot` is an observer that automatically updates the plot whenever the `filtered_data()` reactive expression changes, regardless of any user interaction.
+B) `renderPlot` should be used with observe instead of `eventReactive` to improve the efficiency and responsiveness of the plot updates.
+C) `eventReactive` is used to update the data when the 'Update Chart' button is clicked, ensuring data processing is limited to this action, whereas observe would continuously monitor changes in inputs without requiring an action button.
+D) The `actionButton` is ineffective without an observe function because eventReactive does not properly capture button clicks.
+E) Using `eventReactive` rather than observe with `actionButton` unnecessarily complicates the app since both serve the same purpose of updating outputs based on input changes.
+
+
+
+### (c). In the Shiny application provided, how would you modify the app to use `observeEvent()` for a specific scenario where you only want to update the data and re-render the plot when both the year and gender have been changed by the user?
+
+A) Incorporate `observeEvent(list(input$year, input$gender), {...})` to ensure joint reactivity without using `actionButton.`
+B) `observeEvent()` cannot be used with multiple inputs and should only be used with single input actions.
+C) Replace `eventReactive(input$update, ...)` with `observeEvent(c(input$year, input$gender), {...})` to trigger updates only when both inputs are altered.
+D) Use `observeEvent(input$year & input$gender, {...})` to monitor changes in both inputs simultaneously.
+E) Maintain `eventReactive` and add `observeEvent(input$update, {...})` to separately handle other UI updates.
+
+
+
+
+# Q2 (10 points each)
+
+This HTML code is part of a webpage containing product information, including prices and descriptions.
+
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Page</title>
+</head>
+<body>
+    <div id="products">
+        <h1>Our Products</h1>
+        <div class="product-item" data-id="1">
+            <span class="product-name">Gadget</span>
+            <span class="product-price">$19.99</span>
+        </div>
+        <div class="product-item" data-id="2">
+            <span class="product-name">Widget</span>
+            <span class="product-price">$25.99</span>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+
+### (a). Using R and the `rvest` package, write the code to extract and print the names of the products listed on the page.
+
+
+
+```r
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+### (b). Write R code using `rvest` to extract the data-id attributes of each product item.
+
+
+
+```r
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+## Q3 (5 points each)
+
+Consider the following data frame `df_waste` which represents the waste generation (in tonnes) of three types of waste materials: Plastic, Metal, and Glass in a city.
+
+```{r, echo=TRUE, eval=TRUE}
+df_waste <- data.frame(
+  day = seq(ymd("2023-01-01"), by="day", length.out=50),
+  plastic = runif(50, 80, 250),
+  metal = rnorm(50, 120, 40),
+  glass = rnorm(50, 100, 60)
+)
+```
+
+
+```{r, eval=TRUE}
+glimpse(df_waste)
+```
+
+### (a). 
+
+Consider the function `calc_moving_avg` which calculates the moving average of a numeric vector. Given the vector from 1 to 8, what is the output of `calc_moving_avg(seq(1:8))`? Recall that the function uses a window width of 7 for the moving average.
+
+
+```{r,eval=TRUE}
+library(dplyr)
+library(purrr)
+
+calc_moving_avg <- function(vec, width = 7) {
+  if (length(vec) < width) return(NULL)
+  map_dbl(width:length(vec), ~ mean(vec[.x:(.x-width+1)]))
+}
+```
+
+
+```{r, eval=FALSE}
+calc_moving_avg(seq(1:8))
+```
+
+\
+
+\
+
+\
+
+\
+
+### (b). 
+
+Bootstrap is a statistical technique for estimating population parameters by resampling with replacement from an observed dataset using the `sample()` function in R. This method involves generating multiple small samples (bootstrap samples), each of which is drawn randomly, allowing elements to be picked multiple times. 
+
+What would typically be the output of this function call: `bootstrap_ci(df_waste[[3]], n_boot = 500)`? Describe conceptually what the resulting object would convey without needing to calculate the values. Report the length or dimension of the output. 
+
+
+
+```{r,eval=TRUE}
+bootstrap_ci <- function(vec, n_boot=500, width = 7) {
+  map_dbl(1:n_boot, ~ {
+    sample_vec <- sample(vec, size = length(vec), replace = TRUE)
+    ma_values <- calc_moving_avg(sample_vec, width)
+    if (length(ma_values) > 0) mean(ma_values) else NA
+  }) %>% 
+  quantile(probs = c(0.025, 0.975), na.rm = TRUE)
+}
+```
+
+
+```{r eval=FALSE}
+bootstrap_ci(df_waste[[3]], n_boot = 500)
+```
+
+\
+
+\
+
+\
+
+\
+
+### (c). 
+
+Using the `bootstrap_ci` function and the `df_waste` dataframe, write a code snippet to calculate the 95% confidence intervals for the average moving averages of the `plastic`, `metal`, and `glass` waste columns, excluding the `day` column. Use a bootstrap sample size of 500 for each.
+
+
+```{r,eval=FALSE, echo=FALSE}
+results <- df_waste %>%
+  select(-day) %>%
+  map_df(~ bootstrap_ci(.x, n_boot = 500), .id = "material")
+
+results
+```
+
+```r
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+## Q4 (5 points each)
+
+Consider a logistic regression model used for a binary classification problem that predicts whether a student will pass (1) or fail (0) an exam. The model uses one predictor: the student's hours of study per week. The logistic regression equation is given by:
+
+$$\log \left(\frac{p}{1-p}\right)=-3+0.5 \times \text { Hours of Study }$$
+
+where $p$ is the probability that the student passes the exam.
+
+
+### (a).  Given a student studies 10 hours per week, calculate the probability that the student will pass the exam. You may find the following useful:
+
+```{r, collapse=TRUE}
+exp(1)
+```
+
+
+A) 0.7311
+B) 0.6225
+C) 0.8808
+D) 0.9526
+E) 0.5
+
+
+
+
+### (b). If a student needs to achieve at least an 80% chance of passing the exam, how many total hours must they study per week? Use the logistic equation to find the minimum required study hours. You may find the following useful:
+
+```{r, collapse=TRUE}
+log(4)
+```
+
+A) 5 hours
+B) 7 hours
+C) 8 hours
+D) 9 hours
+E) More than 14 hours
+
+
+
+### (c). The coefficient of hours of study in the logistic regression model is 0.5. What is the interpretation of this coefficient?
+
+A) The odds of passing are doubled for each additional hour of study.
+B) The odds of passing increase by a factor of `exp(0.5)` for each additional hour of study.
+C) The probability of passing increases by 50% for each additional hour of study.
+D) The probability of passing increases as study hours increase.
+E) The odds of passing increase by 50% for each additional hour of study.
+
+### (d). In logistic regression, if the outcome variable represents "pass" (1) or "fail" (0) in an exam, and a significant predictor has a negative coefficient, what does this imply about the relationship between the predictor and the likelihood of passing?
+
+A) As study hours increase, the likelihood of passing the exam increases.
+B) The effect of study hours on the likelihood of passing is ambiguous and requires further testing.
+C) There is no relationship between study hours and the likelihood of passing.
+D) The predictor inversely predicts the likelihood of passing but does not affect the odds.
+E) As study hours increase, the likelihood of passing the exam decreases.
+
+
+
+## Q5 (5 points each)
+
+Consider a binary classification problem where we use a k-Nearest Neighbors (k-NN) algorithm. A confusion matrix shows the classification performance:
+
+```{r, eval=TRUE, echo=FALSE}
+# Confusion Matrix
+library(kableExtra)
+# Define the confusion matrix
+confusion_matrix <- matrix(c(55, 19, 15, 91), nrow = 2)
+colnames(confusion_matrix) <- c("Predicted Negative", "Predicted Positive")
+rownames(confusion_matrix) <- c("Actual Negative", "Actual Positive")
+
+# Convert the matrix to a data frame and add row names as a new column
+df <- as.data.frame(confusion_matrix)
+
+# Create a table using knitr and kableExtra
+knitr::kable(df) %>%
+  kable_styling("striped", full_width = F, position = "center") %>%
+  row_spec(0, bold = T, color = "white", background = "#6C757D") 
+```
+
+
+### (a). What is the accuracy of the model according to the provided confusion matrix?
+
+
+A) 0.852
+B) 0.903
+C) 0.755
+D) 0.811
+E) 0.954
+
+
+### (b). In the context of k-NN, how does the use of Euclidean distance affect the classification in high-dimensional spaces?
+
+A) Euclidean distance calculations become computationally cheaper as more dimensions are added.
+B) The distance metric tends to not differentiate well between the nearest and farthest neighbors as dimensionality increases (curse of dimensionality).
+C) Euclidean distance becomes more meaningful as the number of dimensions increases, improving classification accuracy.
+D) Increasing dimensionality reduces the overall distance between points, leading to less meaningful neighbor calculations.
+E) None of the above; Euclidean distance is independent of the dimensionality of the space.
+
+
+
+### (c). When tuning k for a k-NN model, how can ROC curves be utilized to select an optimal k value?
+
+A) The ROC curve should be used to select a k that maximizes both sensitivity and specificity simultaneously.
+B) ROC curves are irrelevant in the context of tuning k in k-NN models.
+C) Choose k that maximizes the area under the ROC curve, balancing sensitivity and (1 - specificity).
+D) Select k that minimizes the area under the ROC curve to ensure maximum model complexity.
+E) Use the ROC curve to find a k where the true positive rate equals the false positive rate.
+
+
+
+### (d). How is class assignment determined in k-NN?
+
+A) The class is determined by a weighted vote based on the distance of the k nearest neighbors.
+B) The class with the most representatives among the nearest neighbors determines the class of the query point.
+C) The class is assigned randomly among the classes of the k nearest neighbors.
+D) The class of the nearest single neighbor is always chosen, regardless of k.
+E) The class is assigned based on the average distance to all points within the k nearest neighbors.
+
+
+
+### (e). Which of the following best describes the relationship between sensitivity, specificity, and the choice of k in k-NN?
+
+A) Sensitivity and specificity are independent of k; they are more influenced by the dataset's intrinsic characteristics.
+B) Both sensitivity and specificity are maximized at an intermediate value of k, which perfectly balances the local and global data structures.
+C) A smaller k typically increases sensitivity by capturing finer details, but may decrease specificity due to overfitting to noise.
+D) A larger k enhances specificity at the cost of decreasing sensitivity, as the model generalizes by considering more neighbors.
+E) A larger k always increases both sensitivity and specificity by utilizing more data for decision-making.
+
+
+
+### (f). How does averaging the results from k-fold cross-validation affect the selection of k in k-NN?
+
+A) Cross-validation tends to select smaller values of k, as they usually yield higher accuracy on smaller test sets.
+B) It identifies a k that performs consistently well across different subsets of the data, enhancing generalization.
+C) The method biases the selection towards k values that overfit the training data, as averaged results mask the variance.
+D) Averaging results tends to favor larger k values, as variability in the validation results is minimized.
+E) Cross-validation is not useful in k-NN because the algorithm is non-parametric and does not generalize beyond its training set.
+
