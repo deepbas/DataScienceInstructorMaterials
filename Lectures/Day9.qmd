@@ -1,0 +1,493 @@
+---
+title: "Data Imports"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+
+# load necessary packages
+library(tidyverse)
+library(dplyr)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(forcats)
+library(patchwork)
+library(DT)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(lubridate)
+library(rvest)
+library(stringr)
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+
+desserts <- read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/desserts.csv")
+```
+
+
+## Let's start with a messy data!
+
+```{r}
+bar <- tibble(`First Name` = c("Yi", "Do", NA),
+              `Last initials` = c("C", "R", ""),
+              `% in` = c(0.1, 0.5, NA),
+              `ñ$$$` = c(1, 2, NA),
+              ` ` = c(3, 2, 1),
+              ` hi` = c("a", "b", NA),
+              `null` = c(NA, NA, "NULL"))
+
+bar %>% knitr::kable()
+```
+
+## Clean messy column names 
+
+
+```{r}
+library(janitor)
+cleaned_bar <- bar %>%
+  janitor::clean_names() 
+cleaned_bar %>% knitr::kable()
+```
+
+
+::: middle-align-xy
+
+## `tidyr::drop_na()`
+
+Remove *all* rows with **any missing data**. [May not be useful!]{.bold-text}
+
+```{r}
+cleaned_bar %>% tidyr::drop_na() %>% knitr::kable()
+```
+
+:::
+
+::: middle-align-xy
+
+## `tidyr::drop_na(col)`
+
+Remove rows with `NA` in **selected columns**
+
+```{r}
+cleaned_bar %>% drop_na(hi) %>% knitr::kable()
+```
+
+:::
+
+## Convert any empty or null strings to NA with `na_if()`
+
+```{r}
+cleaned_bar <- cleaned_bar %>%
+  mutate(last_initials = na_if(last_initials, ""),
+         null = na_if(null, "NULL"))
+cleaned_bar %>% knitr::kable()
+```
+
+
+
+## [Handling Missing Data with `replace_na()`and `remove_empty()`]{.font70}
+
+
+```{r}
+bar_imputed <- cleaned_bar %>%
+  mutate(first_name = replace_na(first_name, "Unknown"),
+         last_initials = replace_na(last_initials, "Unknown"),
+         percent_in = replace_na(percent_in, mean(percent_in, na.rm = TRUE)),
+         n = replace_na(n, median(n, na.rm = TRUE)),
+         hi = replace_na(hi, "c")) %>% 
+  janitor::remove_empty("cols")
+bar_imputed %>% knitr::kable()
+```
+
+
+
+
+## Working Directories
+
+::: cle
+
+The working directory is where R looks for files and saves files by default.
+
+```{r, eval=FALSE, echo=TRUE}
+getwd() # see working directory
+setwd() # change your working directory
+```
+
+To set working directory to your **STAT 220** course folder
+
+```{r, eval=FALSE}
+setwd("path/to/stat220-folder/")  # set
+getwd()     # check
+```
+
+:::
+
+
+::: middle-align-xy
+
+## Useful Terminal Commands:
+
+::: ws
+
+```r
+$ cd   # change directory
+$ ls   # unix command to list files
+$ pwd  # present working directory
+$ grep  # search for patterns in files
+$ mkdir # create a new directory
+$ mv # move or rename files or directories
+```
+
+:::
+:::
+
+
+::: middle-align-xy
+
+## Web imports
+
+::: mre
+
+To your working environment:
+
+```{r}
+url <- "https://raw.githubusercontent.com/deepbas/statdatasets/main/murders.csv"
+dat <- read.csv(url) # base R 
+```
+
+
+To download file to working folder:
+
+```{r, eval=FALSE}
+download.file(url, "murders.csv")
+```
+
+:::
+:::
+
+
+
+
+## `readr` package
+
+
+::: fsp
+
+- `readr` is a part of **tidyverse** library 
+- Includes functions for reading data stored in text file spreadsheets
+into R.
+- Functions in the package include `read_csv()`, `read_tsv()`, `read_delim()` and more.
+- These differ by the delimiter they use to split columns.
+
+:::
+
+::: footer
+[`readr` cheat sheet](https://rstudio.github.io/cheatsheets/data-import.pdf)
+:::
+
+## Reading and Writing Files: 
+
+::: ws
+
+All `readr` functions share a common syntax
+
+```{r eval=FALSE}
+library(readr)
+df <- read_csv(file = "path/to/file.csv", ...)
+```
+
+
+- Generate tibbles rather than  data frames
+
+:::
+
+
+
+## `readr` functions
+
+
+function  | reads
+:---------|:----------------------
+read_csv()   | Comma separated values
+read_csv2()  | Semi-colon separated values
+read_delim() | General delimited files
+read_fwf()   | Fixed width files
+read_log()   | Apache log files
+read_table() | Space separated
+read_tsv()   | Tab delimited values
+
+
+::: centered-content
+
+## Data frames and tibbles Conversion
+
+::: eqt
+
+<img src="images/09-tibble.png" width="50%" height="45%">
+
+- `as_tibble()` - convert a data frame to a tibble
+- `as.data.frame()` - convert a tibble to a data frame
+
+:::
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca9-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+
+## Did it work as expected?
+
+::: ws
+::: font90
+
+```{r echo=FALSE}
+glimpse(desserts)
+```
+
+We want `technical` to be numerical and `uk_airdate` to be date
+
+:::
+:::
+
+
+::: middle-align-xy
+
+## The `col_types` argument
+
+::: fsp
+By default, looks at first 1000 rows to guess variable data types (`guess_max`)
+
+```{r}
+desserts <- read_csv(
+  "https://raw.githubusercontent.com/deepbas/statdatasets/main/desserts.csv",
+  col_types = list( 
+    technical = col_number(), 
+    uk_airdate = col_date()   
+  ) 
+)
+```
+
+:::
+:::
+
+
+
+## Looking for `problems`
+
+::: cle
+List of potential problems parsing the file
+
+```{r}
+problems(desserts)
+```
+
+:::
+
+
+## Date formatting 
+
+::: cle
+
+```{r echo=FALSE}
+print(problems(desserts), n=5)
+```
+
+
+ISO8601 format: `2021-10-04`
+
+What we have: `17 August 2010`
+
+:::
+
+
+## Adding `format` instructions
+
+::: cle
+
+```{r}
+desserts <- read_csv(
+  "https://raw.githubusercontent.com/deepbas/statdatasets/main/desserts.csv",
+    col_types = list(
+    technical = col_number(), 
+    uk_airdate = col_date(format = "%d %B %Y")  
+  ) 
+)
+```
+
+
+
+- Year: `"%Y"` (4 digits). `"%y"` (2 digits)
+- Month: `"%m"` (2 digits), `"%b"` (abbreviated name in current locale), `"%B"` (full name in current locale).
+- Day: `"%d"` (2 digits), `"%e"` (optional leading space)
+
+:::
+
+
+## Looking for more `problems`
+
+::: cle
+
+List of potential problems parsing the file
+
+```{r}
+problems(desserts)
+```
+
+:::
+
+
+
+
+## Addressing missing values
+
+::: cle
+
+By default `na = c("", "NA")` are the recognized missing values
+
+```{r}
+desserts <- read_csv(
+  "https://raw.githubusercontent.com/deepbas/statdatasets/main/desserts.csv",
+  col_types = list(
+    technical = col_number(), 
+    uk_airdate = col_date(format = "%d %B %Y")
+  ),
+  na = c("", "NA", "N/A") 
+)
+```
+
+:::
+
+
+::: middle-align-xy
+
+## No more `problems`
+
+::: eqt
+
+```{r}
+problems(desserts)
+```
+
+:::
+:::
+
+
+## The Dataset
+
+::: dse
+```{r echo=FALSE}
+desserts
+```
+:::
+
+
+## Column casting functions
+
+
+Type  | **dplyr::glimpse()**  | [readr::col_*()]{.bold}
+-----|----------|------------
+logical   | `<lgl>`            | `col_logical`
+numeric   | `<int>` or `<dbl>` | `col_number`
+character | `<chr>`            | `col_character`
+factor    | `<fct>`            | `col_factor`
+date      | `<date>`           | `col_date`
+
+
+
+## `?read_csv`
+
+::: fsp
+::: font120
+```{r eval=FALSE}
+read_csv(file, 
+         col_names = TRUE,
+         col_types = NULL,
+         locale = default_locale(),
+         na = c("", "NA"), 
+         quoted_na = TRUE,
+         quote = "\"", 
+         comment = "",
+         trim_ws = TRUE,
+         skip = 0,
+         n_max = Inf,
+         guess_max = min(1000, n_max),
+         progress = show_progress())
+```
+:::
+::: 
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please do the remaining problems in the class activity.
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

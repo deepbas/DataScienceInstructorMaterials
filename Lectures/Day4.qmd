@@ -1,0 +1,803 @@
+---
+title: "Graphics with ggplot2"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+# load necessary packages
+library(tidyverse)
+library(dplyr)
+library(countdown)
+library(ggthemes)
+library(patchwork)
+library(DT)
+library(moderndive)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(palmerpenguins)
+library(broom)
+library(ggResidpanel)
+library(ggrepel)
+library(kableExtra)
+
+
+select <- dplyr::select
+
+# Set ggplot theme
+theme_set(theme_tufte(base_size = 10))
+
+yt <- 0
+
+hate_crimes <- read_csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/HateCrime.csv")
+
+base <- ggplot(hate_crimes, aes(x=median_household_income,
+                                y=hate_crimes_per_100k_splc)) 
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+# renderthis::to_pdf(from = "Day4.html", complex_slides = TRUE, partial_slides = TRUE)
+
+```
+
+
+
+
+## Visualization in the data science workflow
+
+::: mre
+
+Data visualization is a key skill for data scientists. Useful for:
+
+- Identification of outliers
+- Guidance of recoding operations
+- Summarize distributions
+- Discover patterns, relationships
+- Visualize uncertainty
+
+:::
+
+
+## Which visualization do you prefer?
+
+
+```{r, echo=FALSE, fig.align='center'}
+library(corrplot)
+library(reshape2)
+
+# Load the data
+data(mtcars)
+  
+# Calculate the correlation matrix
+cor_matrix = cor(mtcars)
+  
+# Set the dimensions of the output file
+width <- 7
+height <- 7
+
+# Save the correlogram to the "images" folder
+  corrplot(cor_matrix, type = "upper", diag = FALSE,
+           method = "circle", number.cex = 0.65,
+           addCoef.col = "black", 
+           tl.col = "black", tl.srt = 45)
+```
+
+
+## Which visualization do you prefer?
+
+
+```{r, echo=FALSE, fig.width=6, fig.height=6, out.width="95%", fig.align='center', results='hide'}
+# Calculate the correlation matrix
+cor_matrix <- cor(mtcars)
+
+# Melt the correlation matrix
+melted_cor_matrix <- melt(cor_matrix)
+
+# Create the heatmap
+ggplot(data = melted_cor_matrix, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "gray90", linewidth = 0.5) +
+  scale_fill_gradient2(low = "#3C57A8", high = "#B2182B", mid = "white", midpoint = 0, limit = c(-1, 1), space = "Lab", name = "Correlation") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 12, hjust = 1, family = "Arial"),
+        axis.text.y = element_text(size = 12, family = "Arial"),
+        axis.title = element_blank(),
+        legend.position = "right",
+        legend.title = element_text(size = 14, face = "bold", family = "Arial"),
+        legend.text = element_text(size = 12, family = "Arial"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  coord_fixed()
+```
+
+
+
+## Which quantity do I want to visualize?
+
+::: prm
+
+- Amounts
+- Distributions
+- Proportions
+- Associations
+- Trends
+- Estimates
+- Uncertainty
+
+:::
+
+
+
+## Which question do I want to answer?
+
+
+::: cle
+::: font80
+- "Is the distribution normal (or uniform or...)?" $\rightarrow$ Histogram, density plot, Q-Q plot
+- "Are univariate distributions across subgroups different?" $\rightarrow$ Boxplots
+- "How do differences in amounts between groups compare?" $\rightarrow$ Barplot
+- "What is the relationship between $\mathrm{x}$ and $\mathrm{y}$ ?" $\rightarrow$ Scatterplot, contour plot, hex bins
+- "Are the data clustered by subgroup?" $\rightarrow$ Scatterplot with color
+- "How uncertain are estimates? $\rightarrow$ Error bars, confidence bands
+
+:::
+:::
+
+# **ggplot2**  &mdash; Overview
+
+::: bqt
+
+A powerful package for visualizing data used widely by academics and industries alike. Some useful resources:
+
+  - [The package documentation](https://www.rdocumentation.org/packages/ggplot2/versions/3.2.1)
+  - [The book](https://ggplot2-book.org/) by its creator Hadley Wickham
+  - [The reference page](https://ggplot2.tidyverse.org/reference/)
+  - [The extensions](https://exts.ggplot2.tidyverse.org/), maintained by the `ggplot2` community
+
+:::
+
+
+## Our building blocks `r emo::ji("bricks")`
+
+::: dse
+Essentials
+
+- **Data**: the data frame, or data frames, we will use to plot
+- **Aesthetics**: the variables we will be working with
+- **Geometric objects**: the type of visualization
+
+:::
+
+## Our building blocks `r emo::ji("bricks")`
+
+::: dse
+
+Additional elements
+
+- **Theme adjustments**: linewidth, text, colors etc
+- Facets
+- **Coordinate system**
+- **Statistical transformations**
+- **Position adjustments**
+- Scales
+
+:::
+
+
+
+::: middle-align-xy
+
+## Data 
+
+::: eqt
+
+In `ggplot2`, we always specify a data frame with:
+
+```r
+ggplot(name_of_your_df)
+```
+
+:::
+:::
+
+## Aesthetics 
+
+::: bq
+
+Specify the variables in the data frame we will be using and what role they play. Use the function `aes()` within the `ggplot()` function after the data frame.
+
+```r
+ggplot(name_of_your_df, aes(x = your_x_axis_variable, 
+                            y = your_y_axis_variable))
+```
+
+
+Beyond your axis, you can add more aesthetics representing further dimensions of the data in the two dimensional graphic plane, such as: `shape`, `linewidth`, `color`, `fill`, `alpha` to name a few.
+
+
+:::
+
+## Geometric objects 
+
+::: bq
+
+The third layer required to create our plot (which determines the specific kind of visualization, such as a bar plot or scatter plot) involves adding a geometric object. 
+
+To do this, we should append a plus (+) at the end of the initial line and specify the desired geometric object type, like `geom_point()` for a scatter plot or `geom_bar()` for bar plots.
+
+```r
+ggplot(name_of_your_df, aes(x = your_x_axis_variable, 
+                            y = your_y_axis_variable)) +
+  geom_point()
+```
+
+:::
+
+## Theme and Axes
+
+::: lqt
+::: font80
+
+At this stage, our plot might require a few finishing touches. We might want to adjust the axis names or remove the default gray background. To accomplish this, we should add another layer, preceded by a plus sign (+)
+
+To modify the axis names, we can use the `labs()` function. Additionally, we can apply some of the pre-defined themes, such as `theme_minimal()`.
+
+
+```r
+ggplot(name_of_your_df, aes(x = your_x_axis_variable,
+                            y = your_y_axis_variable)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Your x label",
+       y = "Your y label",
+       title = "Your ploty title)
+```
+
+:::
+
+
+
+::: footer
+[Complete themes](https://ggplot2.tidyverse.org/reference/ggtheme.html)
+:::
+
+
+:::
+
+::: middle-align-xy
+
+## Common **ggplot2** options 
+
+::: mre
+
+```
+ggplot(data) +    # data
+  <geometry_funs>(aes(<variables>)) + # aesthetic variable mapping
+  <label_funs> +  # add context
+  <facet_funs> +  # add facets (optional)
+  <coordinate_funs> +  # play with coords (optional)
+  <scale_funs> + # play with scales (optional)
+  <theme_funs> # play with axes, colors, etc (optional)
+```
+
+:::
+
+
+::: footer
+See the [ggplot2 cheatsheets](https://rstudio.com/resources/cheatsheets/) for more details
+:::
+
+:::
+
+## Example Visualization 1
+
+
+::: panel-tabset
+
+### Plot
+
+```{r hist1, fig.align='center', echo=FALSE, out.width="100%"}
+# Histogram of mpg in the mtcars dataset
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(binwidth = 2, 
+                 fill = "cornflowerblue") +
+  theme_minimal() +
+  labs(title = "Distribution of Miles per Gallon (mpg)")
+```
+
+
+### Code
+
+```{r hist2, fig.align='center', out.width="100%", eval=FALSE}
+# Histogram of mpg in the mtcars dataset
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(binwidth = 2, 
+                 fill = "cornflowerblue") +
+  theme_minimal() +
+  labs(title = "Distribution of Miles per Gallon (mpg)")
+```
+
+
+:::
+
+## Example Visualization 2
+
+::: panel-tabset
+
+### Plot
+
+```{r density1, fig.align='center', echo=FALSE, out.width="100%"}
+# Histogram with density overlay for mpg in the mtcars dataset
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(aes(y = ..density..), binwidth = 2, fill = "skyblue", alpha = 0.5) +
+  geom_density(color = "firebrick") +
+  theme_minimal() +
+  labs(title = "Histogram and Density of Miles per Gallon (mpg)")
+```
+
+### Code
+
+
+```{r density2, fig.align='center', out.width="100%", eval=FALSE}
+# Histogram with density overlay for mpg in the mtcars dataset
+ggplot(mtcars, aes(x = mpg)) +
+  geom_histogram(aes(y = ..density..), 
+                 binwidth = 2, 
+                 fill = "skyblue", 
+                 alpha = 0.5) +
+  geom_density(color = "firebrick") +
+  theme_minimal() +
+  labs(title = "Histogram and Density of Miles per Gallon (mpg)")
+```
+
+
+:::
+
+## Example Visualization 3
+
+::: panel-tabset
+
+### Plot
+
+
+```{r barplot1, fig.align='center', out.width="100%", echo=FALSE}
+# Barplot of number of cars by number of cylinders in the mtcars dataset
+ggplot(mtcars, aes(x = factor(cyl))) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Count of Cars by Cylinder Count", 
+       x = "Number of Cylinders", 
+       y = "Count")
+```
+
+
+### Code
+
+```{r barplot2, fig.align='center', out.width="100%", eval=FALSE}
+# Barplot of number of cars by number of cylinders in the mtcars dataset
+ggplot(mtcars, aes(x = factor(cyl))) +
+  geom_bar(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Count of Cars by Cylinder Count",
+       x = "Number of Cylinders", 
+       y = "Count")
+```
+
+
+
+
+:::
+
+## Example Visualization 4
+
+::: panel-tabset
+
+### Plot
+
+
+```{r boxplot1, fig.align='center', echo=FALSE, out.width="100%"}
+# Boxplot of mpg by number of cylinders in the mtcars dataset
+ggplot(mtcars, aes(x = factor(cyl), y = mpg)) +
+  geom_boxplot(fill = "lightgreen") +
+  theme_minimal() +
+  labs(title = "Miles per Gallon (mpg) by Cylinder Count", 
+       x = "Number of Cylinders", y = "mpg")
+```
+
+
+### Code
+
+```{r boxplot2, fig.align='center', out.width="100%", eval=FALSE}
+# Boxplot of mpg by number of cylinders in the mtcars dataset
+ggplot(mtcars, aes(x = factor(cyl), y = mpg)) +
+  geom_boxplot(fill = "lightgreen") +
+  theme_minimal() +
+  labs(title = "Miles per Gallon (mpg) by Cylinder Count", 
+       x = "Number of Cylinders", 
+       y = "mpg")
+```
+
+
+:::
+
+
+## Example Visualization 5
+
+::: panel-tabset
+
+### Plot
+
+
+```{r scatter-plot1, fig.align='center', echo=FALSE, out.width="100%"}
+# Scatterplot of mpg vs. weight in the mtcars dataset
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(color = "purple") +
+  theme_minimal() +
+  labs(title = "Miles per Gallon (mpg) vs. Weight", x = "Weight", y = "mpg")
+```
+
+
+### Code
+
+```{r scatter-plot2, fig.align='center', out.width="100%", eval=FALSE}
+# Scatterplot of mpg vs. weight in the mtcars dataset
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(color = "purple") +
+  theme_minimal() +
+  labs(title = "Miles per Gallon (mpg) vs. Weight", 
+       x = "Weight", 
+       y = "mpg")
+```
+
+
+:::
+
+## Example Visualization 6
+
+::: panel-tabset
+
+### Plot
+
+
+```{r contour-plot1, fig.align='center', echo=FALSE, out.width="100%"}
+# Contour plot of mpg vs. weight in the mtcars dataset
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_density_2d(color = "chocolate") +
+  theme_minimal() +
+  labs(title = "Miles per Gallon (mpg) vs. Weight", x = "Weight", y = "mpg")
+```
+
+
+### Code
+
+```{r contour-plot2, fig.align='center', out.width="100%", eval=FALSE}
+# Contour plot of mpg vs. weight in the mtcars dataset
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_density_2d(color = "chocolate") +
+  theme_minimal() +
+  labs(title = "Miles per Gallon (mpg) vs. Weight",
+       x = "Weight", 
+       y = "mpg")
+```
+
+
+
+:::
+
+## Example Visualization 7
+
+::: panel-tabset
+
+### Plot
+
+
+```{r QQ-plot1, fig.align='center', echo=FALSE, out.width="100%"}
+# Q-Q plot for mpg in the mtcars dataset
+ggplot(mtcars, aes(sample = mpg)) + 
+  stat_qq(color = "darkorange") +
+  geom_qq_line(color = "maroon") +
+  theme_minimal() +
+  labs(title = "Q-Q Plot for Miles per Gallon (mpg)")
+```
+
+### Code
+
+```{r QQ-plot2, fig.align='center', out.width="100%", eval=FALSE}
+# Q-Q plot for mpg in the mtcars dataset
+ggplot(mtcars, aes(sample = mpg)) + 
+  stat_qq(color = "darkorange") +
+  geom_qq_line(color = "maroon") +
+  theme_minimal() +
+  labs(title = "Q-Q Plot for Miles per Gallon (mpg)")
+```
+
+:::
+
+## Example Visualization 8
+
+::: panel-tabset
+
+### Plot
+
+```{r errorbar-plot1, fig.align='center', echo=FALSE, out.width="100%"}
+# Error bars for mpg by number of cylinders in the mtcars dataset
+ggplot(mtcars, aes(x = factor(cyl), y = mpg)) +
+  geom_bar(stat = "summary", fun = "mean", fill = "turquoise") +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +
+  theme_minimal() +
+  labs(title = "Mean mpg by Number of Cylinders", 
+       x = "Number of Cylinders", y = "Mean mpg")
+```
+
+### Code
+
+```{r errorbar-plot2, fig.align='center', out.width="100%", eval=FALSE}
+# Error bars for mpg by number of cylinders in the mtcars dataset
+ggplot(mtcars, aes(x = factor(cyl), y = mpg)) +
+  geom_bar(stat = "summary", fun = "mean", fill = "turquoise") +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2) +
+  theme_minimal() +
+  labs(title = "Mean mpg by Number of Cylinders", 
+       x = "Number of Cylinders", 
+       y = "Mean mpg")
+```
+
+:::
+
+## Example Visualization 9
+
+::: panel-tabset
+
+### Plot
+
+
+```{r ebars-plot1, fig.align='center', echo=FALSE, out.width="100%"}
+# Example data for trend plot
+set.seed(42)
+example_data <- data.frame(
+  x = 1:10,
+  y = 2 * (1:10) + rnorm(10, mean = 0, sd = 3),
+  se = runif(10, min = 1, max = 3)
+)
+# Trend plot with error bars
+ggplot(example_data, aes(x = x, y = y)) +
+  geom_point(color = "skyblue", linewidth = 3) +
+  geom_line(color = "skyblue") +
+  geom_errorbar(aes(ymin = y - se, ymax = y + se), width = 0.2) +
+  theme_minimal()
+```
+
+### Code
+
+```{r ebars-plot2, fig.align='center', out.width="100%", eval=FALSE}
+# Example data for trend plot
+set.seed(42)
+example_data <- data.frame(
+  x = 1:10,
+  y = 2 * (1:10) + rnorm(10, mean = 0, sd = 3),
+  se = runif(10, min = 1, max = 3)
+)
+# Trend plot with error bars
+ggplot(example_data, aes(x = x, y = y)) +
+  geom_point(color = "skyblue", linewidth = 3) +
+  geom_line(color = "skyblue") +
+  geom_errorbar(aes(ymin = y - se, ymax = y + se), width = 0.2) +
+  theme_minimal()
+```
+
+:::
+
+## Example Visualization 10
+
+::: panel-tabset
+
+### Plot
+
+
+```{r cbands-plot1, fig.align='center', echo=FALSE, out.width="100%"}
+# Uncertainty - Confidence Bands plot
+set.seed(42)
+example_data <- data.frame(
+  x = 1:10,
+  y = 2 * (1:10) + rnorm(10, mean = 0, sd = 3),
+  se = runif(10, min = 1, max = 3)
+)
+
+ggplot(example_data, aes(x = x, y = y)) +
+  geom_point(color = "skyblue", linewidth = 3) +
+  geom_smooth(method = "loess", se = TRUE, 
+              color = "skyblue", 
+              fill = "skyblue", alpha = 0.3) +
+  theme_minimal()
+```
+
+### Code
+
+```{r cbands-plot2, fig.align='center', out.width="100%", eval=FALSE}
+# Uncertainty - Confidence Bands plot
+set.seed(42)
+example_data <- data.frame(
+  x = 1:10,
+  y = 2 * (1:10) + rnorm(10, mean = 0, sd = 3),
+  se = runif(10, min = 1, max = 3)
+)
+
+ggplot(example_data, aes(x = x, y = y)) +
+  geom_point(color = "skyblue", linewidth = 3) +
+  geom_smooth(method = "loess", se = TRUE, 
+              color = "skyblue", 
+              fill = "skyblue", alpha = 0.3) +
+  theme_minimal()
+```
+
+:::
+
+## Example Visualization 11
+
+::: panel-tabset
+
+### Plot
+
+
+```{r variable-transformation1, fig.align='center', echo=FALSE, out.width="100%"}
+ggplot(data = diamonds, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  theme_minimal() +
+  labs(x = "Carat", y = "Price", 
+       title = "Scatter plot of Diamond Price by Carat Weight") -> p1
+p1
+
+```
+
+### Code
+
+```{r variable-transformation2, fig.align='center', out.width="100%", eval=FALSE}
+ggplot(data = diamonds, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.5) +  
+  theme_minimal() +
+  labs(x = "Carat", y = "Price (log scale)", 
+       title = "Scatter plot of Diamond Price by Carat Weight") -> p1
+```
+
+:::
+
+
+## Example Visualization 12
+
+::: panel-tabset
+
+### Plot
+
+
+```{r variable-transformation3, fig.align='center', echo=FALSE, out.width="100%"}
+ggplot(data = diamonds, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.5, color = "green") +
+  geom_smooth(method = "lm", color = "black", size = 1, se = FALSE) +
+  scale_y_log10() +
+  theme_minimal() +
+  labs(x = "Carat", y = "Price (log scale)", 
+       title = "Scatter plot with Linear Fit of Log-scaled Price by Carat Weight") -> p2
+p2
+```
+
+### Code
+
+```{r variable-transformation4, fig.align='center', out.width="100%", eval=FALSE}
+ggplot(data = diamonds, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.5, color = "green") +
+  geom_smooth(method = "lm", color = "black", size = 1, se = FALSE) +
+  scale_y_log10() +
+  theme_minimal() +
+  labs(x = "Carat", y = "Price (log scale)", 
+       title = "Scatter plot with Linear Fit of Log-scaled Price by Carat Weight") -> p2
+```
+
+:::
+
+
+## Example Visualization 13
+
+::: panel-tabset
+
+### Plot
+
+
+```{r variable-transformation5, fig.align='center', echo=FALSE, out.width="100%"}
+ggplot(data = diamonds, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.4, color = "red") +
+  geom_smooth(method = "lm", color = "black", size = 1, se = FALSE) +
+  scale_x_log10() + scale_y_log10() +
+  theme_minimal() +
+  labs(x = "Carat (log scale)", y = "Price (log scale)", 
+       title = "Log-Log Scatter plot with Linear Model Fit of Price by Carat Weight") -> p3
+p3
+```
+
+### Code
+
+```{r variable-transformation6, fig.align='center', out.width="100%", eval=FALSE}
+ggplot(data = diamonds, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.4, color = "red") +
+  geom_smooth(method = "lm", color = "black", size = 1, se = FALSE) +
+  scale_x_log10() + scale_y_log10() +
+  theme_minimal() +
+  labs(x = "Carat (log scale)", y = "Price (log scale)", 
+       title = "Log-Log Scatter plot with Linear Model Fit of Price by Carat Weight") -> p3
+```
+
+:::
+
+
+## Example Visualization 14
+
+::: panel-tabset
+
+### Plot
+
+
+```{r facet1, fig.align='center', echo=FALSE, out.width="100%"}
+library(ggplot2)
+library(patchwork)
+
+combined_plot <- (p1 | p2) / p3 
+
+combined_plot + 
+  plot_layout(guides = 'collect') + 
+  plot_annotation(title = "Layering Geoms with Patchwork")
+```
+
+### Code
+
+```{r facet2, fig.align='center', out.width="100%", eval=FALSE}
+library(ggplot2)
+library(patchwork)
+
+combined_plot <- (p1 | p2) / p3 
+
+combined_plot + 
+  plot_layout(guides = 'collect') + 
+  plot_annotation(title = "Layering Geoms with Patchwork")
+```
+
+
+:::
+
+
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+::: lqt
+- Please clone the `ca4-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problems on the class activity for today
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 30, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

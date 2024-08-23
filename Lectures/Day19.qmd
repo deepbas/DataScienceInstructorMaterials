@@ -1,0 +1,332 @@
+---
+title: "Shiny Reactivity and App Deployment"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+filters:
+  - shinylive
+  - webr
+---
+
+
+```{r setup, include=FALSE}
+# load necessary packages
+library(tidyverse)
+library(ggplot2)
+library(countdown)
+library(ggthemes)
+library(htmlwidgets)
+library(lubridate)
+library(kableExtra)
+library(fontawesome)
+library(rvest)
+library(forcats)
+library(patchwork)
+library(polite)
+library(DT)
+library(polite)
+library(purrr)
+library(leaflet)
+library(maps)     
+library(sp)       
+library(mapdata)
+
+
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+```
+
+
+## Shiny Reactivity: A Quick Tour
+
+
+::: cle
+
+<center>
+<img src="images/reactivity.png" width="80%" height="60%"> <br>
+<a>Shiny reactivity 101</a>
+</center>
+
+:::
+
+[[Learn more about Shiny reactivity](https://shiny.rstudio.com/articles/understanding-reactivity.html)]{.footer}
+
+
+## Shiny Reactivity: Listen and React
+
+<br>
+
+::: vvt
+
+- Think of Shiny as a live conversation between you and your app.
+- Your app listens (reacts) to what you say (input) and responds with answers (output).
+- It keeps the chat going, updating automatically as the conversation evolves.
+
+:::
+
+[[Understanding reactivity in R](https://shiny.rstudio.com/articles/understanding-reactivity.html)]{.footer}
+
+
+
+## Behind the Scenes: Reactive Expressions
+
+
+<br>
+
+::: zen
+
+"Reactive expressions link your questions to the app's answers."
+
+- They're like the app's thought process, taking your input and figuring out the output.
+- They're smart: only recalculating when needed to keep everything running smoothly.
+
+:::
+
+## Real-World Magic: Reactive Use Cases
+
+
+<br>
+
+::: zen
+
+- Imagine your app fetching data just as you ask for it:
+  + Choosing a file? It reads it on-the-spot.
+  + Curious about data from a website? It grabs it for you.
+  + Need to crunch some numbers based on your choices? It does the math instantly.
+
+:::
+
+
+
+## Sharing Secrets: Reactive Values
+
+
+<br>
+
+<br>
+
+
+:::zen
+
+- Reactive values are the app's memory, holding onto data for quick recall.
+- Think of `input$` as the app's ear, always listening for your next request.
+
+:::
+
+
+
+::: {.column-screen}
+
+##
+
+```{=html}
+<iframe width="1980" height="1320" src="https://shinylive.io/r/editor/#code=NobwRAdghgtgpmAXGKAHVA6ASmANGAYwHsIAXOMpMAGwEsAjAJykYE8AKAZwAtaJWAlAB0IAV1oACADwBaCQDNq4gCYAFKAHM47ERImlapanHUQ41HWACqqZVAMQNE1dSKkJAISic4yiSQkrH0YJAEkIVFFSITABXF0JTlplOHoWABkoViIonQg9PSSUtMZTczyCgrF4RloCcMjSSyJ6ThjcCRiAOVEYejgQonl-VoGAN3taEk5Eds78ysWlgomlOAkAXgkARgAGXY6YPk2d4QW9OIS9GCg+MosJVFdSAHkoxstlWk5SFzcYgRnC4iM7BMYDaRyeSiCAEAwkdh8RodHKkRoCCQgBKoxoAEi+Pz+7lkEkYFBSpWe7Cx5wkvB+7EYECIjBgiIiUVxLU4gISAF8znyRDw+KwAILodjiDpggYCMB8gC6QA" title="Webpage example"></iframe>
+```
+
+:::
+
+
+## `actionButton()`: The Magic Button in Shiny
+
+::: ws
+::: font60
+
+"🖱️ A button that lets users decide when to make things happen.
+
+How `actionButton()` Empowers Your App
+
+- **What it does**: Adds a clickable button to your app's page.
+- **User Power**: Lets people run actions (like calculations or data display) on their command.
+- **Pair with Magic**: Works best with `eventReactive()`, waiting for the click to spring into action.
+
+:::
+:::
+
+
+::: {.column-screen}
+
+##
+
+```{=html}
+<iframe width="1980" height="1320" src="https://shinylive.io/r/editor/#code=NobwRAdghgtgpmAXGKAHVA6ASmANGAYwHsIAXOMpMAGwEsAjAJykYE8AKAZwAtaJWAlAB0IAV1oACADwBaCQDNq4gCYAFKAHM47ERImlapanHUQ41HWACqqZVAMQNE1dSKkJAISic4yiSQkrH0YJAEkIVFFSITABXF0JTlplOHoWABkoViIonQg9PSSUtMZTczyCgrF4RloCcMjSSyJ6ThjcCRiAOVEYejgQonl-VoGAN3taEk5Eds78ysWlgomlOAkAXgkARgAGXY6YPk2duITKqAIDEg8o0hJLUVt7ODmYmztyZ1do2PnKs4LPQwKB8MoWVA-ADyUUalmUtE4pBcbhiAmECwxGJEwTGA2kcnkoggVymEHYfEaHRypEaAgkIAAvjjePwAILodjiDq4gYCMCMgC6QA" title="Webpage example"></iframe>
+```
+
+:::
+
+
+
+## Understanding `eventReactive()` in Shiny
+
+
+<br>
+
+::: mre
+
+- `eventReactive()` lets a Shiny app react only when you want.
+- Trigger updates with specific actions, like clicking a button.
+- Reduces work by updating calculations only when needed.
+
+:::
+
+
+
+
+::: {.column-screen}
+
+##
+
+```{=html}
+<iframe width="1980" height="1320" src="https://shinylive.io/r/editor/#code=NobwRAdghgtgpmAXGKAHVA6ASmANGAYwHsIAXOMpMAGwEsAjAJykYE8AKAZwAtaJWAlAB0IAV1oACADwBaCQDNq4gCYAFKAHM47ERIkwofdRDjUdEPXrHxGtAgEkIqUaR1gi9TkLwTvAOVEYejhGCSJ5MM8QgDcoUloSLx9YpTgJAF4JAEYABhzcfT4M7IFcXUsoAniSACEXUhI3UVRlOLg60gaIbwLvAFUWtolVaiJSb1LyvVRR0gB5F2dXb2VaTlIRsYny4QhdkU4YkOk5eVEIKoSIdj4lgqJFlwEJEHLW0igAfQbPmbGTiRwaIUUhYOCVeLAm5OFwAEma73a9RIBVeFksjAgREYMGhS1hHk4uz0AF99uiHqR8at1ptSADGBRlCE6ew0ZYJLx1ux3l8fn9XAJiRIySISSIDrx+ABBdDscQFQ6MYGMARgEkAXSAA" title="Webpage example"></iframe>
+```
+
+
+:::
+
+
+
+
+## `reactiveValues()`: Your App's Memory
+
+::: ws
+::: font80
+
+"Think of `reactiveValues()` as a way for your app to remember and update things."
+
+- **Memory Bank**: Stores and updates information your app needs to remember.
+- **Flexibility**: Change one piece of info without affecting the rest.
+- **Teamwork**: Shares data between different parts of your app seamlessly.
+
+
+:::
+:::
+
+
+## Observe in Shiny
+
+::: ws
+::: font80
+
+- **Reactive Context**: `observe()` automatically re-executes in a reactive context when dependencies change, crucial for side effects and UI updates.
+
+- **No Return Value**: `observe()` performs actions without returning values, differing from `reactive()` which computes and returns data.
+
+- **Use Cases**: Used for updating reactive states and UI based on input changes, without producing outputs.
+
+:::
+:::
+
+
+## Observe in Shiny
+
+::: ws
+::: font80
+
+- **Reactive Context**: `observe()` automatically re-executes in a reactive context when dependencies change, crucial for side effects and UI updates.
+
+- **No Return Value**: `observe()` performs actions without returning values, differing from `reactive()` which computes and returns data.
+
+- **Use Cases**: Used for updating reactive states and UI based on input changes, without producing outputs.
+
+:::
+:::
+
+
+
+## `observeEvent()`: The Watchful Eye in Shiny
+
+::: ws
+::: font80
+
+"`observeEvent()` watches for specific actions, like button clicks, to do something special."
+
+
+- **Action Detector**: Springs into action when it detects its specified trigger (like a button press).
+- **Doer of Tasks**: Executes code to make changes or updates, without needing to return any value.
+- **Perfect Pair**: Works hand-in-hand with `actionButton()` for on-demand actions.
+
+:::
+:::
+
+
+
+::: {.column-screen}
+
+##
+
+```{=html}
+<iframe width="1980" height="1320" src="https://shinylive.io/r/editor/#code=NobwRAdghgtgpmAXGKAHVA6ASmANGAYwHsIAXOMpMAGwEsAjAJykYE8AKAZwAtaJWAlAB0IAV1oACADwBaCQDNq4gCYAFKAHM47ERImlapanHUQ41HWADKtGKmMSAwkVFk4jIWAG5dEsfEZaAgBJCFRRUksoZQArUU5SADUoJThPXAlPAEFY+NIJelZEdIkARm9fKAIDEgAhCNISSz4CRjh4MnrSRogSz1DW9opSTwqIPSqaiC6ey2U4QY7SGZI+sAARBbal0Z9xgsZ2Mb1yAA9SAHkI8MjPAlFGNrJk1NGRYQhOdwA3d2k5eSuaq0Jp8G4ZFykG4CCQgXzEVzkRj-CRtSa0X4vURwTjsb4pbESAC8EgADB89ER6F9GL8AKK-MjsMERAAkLW2wxWEAycP2egRbkYrPxqRRgqRIoJcAkAGoJCzSKzonEEli0vsAL4UiRUmn0xmRRWs+aLLkNEi83wClxCqVi2QSCXue2EuTGlV5dW+bW+SE3Vn3R7DdUop7zRgAFTg53YfL0elQUAS2k8jgeT3y6uKeCdtslouxOt9EE1Ih4fFYWXQ7HEGX17g+IjAmoAukA" title="Webpage example"></iframe>
+```
+
+:::
+
+
+## `isolate()`: Pausing Reactivity in Shiny
+
+::: cle
+::: font80
+
+"Use `isolate()` to freeze time in your app, preventing automatic updates."
+
+- **Control Freak**: Lets you hold back reactions, giving you control over when updates happen.
+- **Stealth Mode**: Use inputs quietly without alerting the rest of your app to change.
+- **Strategic Updates**: Perfect for when you need to fetch or use data on your own terms, not automatically.
+
+:::
+:::
+
+::: {.column-screen}
+
+##
+
+```{=html}
+<iframe width="1980" height="1320" src="https://shinylive.io/r/editor/#code=NobwRAdghgtgpmAXGKAHVA6ASmANGAYwHsIAXOMpMAVwEsACAHgFp6AzAGzoBMAFKAOZwAFAB0I9euQAepAJIRU1UmLAz5i5aLz1tAUTJwATvQDOReFLiztASlzjJUAqVokAQstIlVp6gCMYWlJPUm8IbVxdMABlAKDSOwcJK1kAeWUlFW0iTOUAFWtEsHtHVNIM0izVYmpDIztxW3FTYwA3YyZWNjqXNwhhWk1SKNyq5Vt6EDLa+q76IzhnVw6ANSguOFNhAg5aAgBrU3oAXnoABmaUsqJ-VqMOvQ6yQeGAEj9A4NDwqOmUySzchGN67fZHeZA4ygvaHY4AanoAEYypIxlk3uiCkV5osINxjIVZMJ-pIyfQAMT0ACqpiGAnotHMHCg5GEk289FQi2epAWSz6bWCAE96CRygosvQCAALKAQISmVFk1BQUxs7QATVyZniwXI3EQkUZ73UkomyoAvldyVjSKDcnMWPz8YSiiTlZJVeqRNo4l8+f4vOKwYc4NxjVCQaGjlFtK54EqSlabfRreJLS0ZUNhQBBdDCOhRe4dIy2MCWgC6QA" title="Webpage example"></iframe>
+```
+
+:::
+
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+::: lqt
+::: font60
+- Please clone the `ca19-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- For the remainder of time, let's practice building a simple Shiny app and deploy it to [Shinyapps.io](https://www.shinyapps.io/)
+- Go to [Shinyapps.io](https://www.shinyapps.io/), create a new account, and authenticate RStudio to connect with the web server by following the provided steps.
+:::
+:::
+:::
+:::
+
+`r countdown(minutes = 30, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+

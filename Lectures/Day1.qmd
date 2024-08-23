@@ -1,0 +1,403 @@
+---
+title: "Introduction to Data Science"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide-number: true
+    preview-links: auto
+    history: true
+    transition: slide
+    background-transition: fade    
+    touch: false 
+    controls: true
+---
+
+```{r setup, include=FALSE}
+# load necessary packages
+library(tidyverse)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(xaringanExtra)
+library(forcats)
+library(patchwork)
+library(knitr)
+library(gridExtra)
+
+
+select <- dplyr::select
+
+# Set ggplot theme
+theme_set(theme_tufte(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+```
+
+::: centered-content
+## Something about me
+
+::: row
+::: left
+::: bq
+::: incremental
+-   Third year at Carleton
+-   Originally from Nepal
+-   Research in Bayesian computation and machine learning
+-   Avid learner and traveler
+:::
+:::
+:::
+
+::: right
+<br>
+
+[![My website](images/website.png)](http://deepbas.io)
+
+:::
+:::
+:::
+
+::: centered-content
+## What is data science?
+
+::: bqt
+:::: font90
+Data science is the application of **computational** and **statistical** techniques to gain insight into some problem in the real world
+::::
+:::
+
+<!-- Data science is an exciting discipline that allows you to turn raw data into understanding, insight, and knowledge. -->
+::: font80
+$$
+\begin{align*}
+\text{Data Science} &= \text{scientific inquiry } +\\
+& \quad  \text{ data collection } +\\
+& \quad  \text{ data processing } +\\
+& \quad  \text{ visualization } +\\
+& \quad  \text{ statistics } +\\
+& \quad  \text{ machine learning } +\\
+& \quad  \text{ communication }
+\end{align*}
+$$
+:::
+:::
+
+
+::: centered-content
+
+## Data Science in a Nutshell
+
+
+![](images/ds-cycle.png)
+
+
+<span class = "footnote">Image adapted from work of Joe Blitzstein, Hanspeter Pfister, and Hadley Wickham<span>
+:::
+
+
+## Introduction to Data Science
+
+::: green-h
+Focus on the "soup to nuts" approach to problem solving
+:::
+
+::: bqt
+::: incremental
+-   data wrangling
+    -   reshaping, cleaning, gathering
+-   learning from data
+    -   EDA tools
+    -   statistical learning methods
+-   communication
+    -   reproducibility
+    -   effective visualization
+    
+:::    
+:::
+
+
+
+::: centered-content
+
+## Gendered language in professor reviews
+
+
+![Rate my professor reviews](images/rateprofessor.png)
+
+
+::: footer
+Source [Click here](http://benschmidt.org/profGender/) 
+:::
+:::
+
+
+
+::: centered-content
+## Active Participation and Experimentation
+
+::: bq
+::: incremental
+
+- **Engage Actively** with provided `.Rmd` documents during class
+  - Use these for note-taking and running code live.
+
+- **Ask Questions**
+  - Every question is valuable; we're learning together.
+
+- **Experiment**
+  - Trial and error is key; explore and experiment with the code.
+
+
+:::
+:::
+:::
+
+::: centered-content
+## Tell me something about yourself!
+
+::: row
+::: left
+-   Your name?
+-   Gender Pronouns?
+-   Why are you interested in data science?
+-   Your favorite data scientist/scientist?
+:::
+
+::: right
+<iframe src="https://giphy.com/embed/Tq8B3WOqXToBlrqClZ" width="3000" height="280" frameBorder="0" class="giphy-embed" allowFullScreen>
+
+</iframe>
+
+<p><a href="https://giphy.com/gifs/new-post-creative-Tq8B3WOqXToBlrqClZ">via GIPHY</a></p>
+:::
+:::
+:::
+
+::: centered-content
+## Class Pipelines
+
+<https://stat220-spring24.netlify.app>
+
+::: bql
+-   Please bookmark this page: should be checked for tutorials and solutions to class activities.
+-   Most of the course information and schedule will be posted in [moodle](https://moodle.carleton.edu/course/view.php?id=43692)
+-   Use moodle/Gradescope for submitting class activity, homework and seeing grades
+-   Github Class Organization hosts all the files relevant for the course 
+:::
+:::
+
+
+::: middle-align-xy
+## Necessary skills to be mastered
+
+::: bql
+-   programming with data
+-   statistical modeling
+-   domain knowledge
+-   communication
+:::
+:::
+
+
+::: centered-content
+## What will a typical day/week look like?
+
+::: eqt
+::: incremental
+- Before class: 
+  - Some reading/video to introduce some topics 
+  - Work on homework/projects, come with questions 
+- During class: 
+  - Mini lectures 
+  - Class activities
+:::  
+:::
+:::
+
+::: middle-align-xy
+## What you need to do next . ...
+
+::: bql
+-   read the [Posit for Stat220](https://stat220-spring24.netlify.app/posit) page
+-   read the [GitHub for Stat220](https://stat220-spring24.netlify.app/github_tutorial) page
+-   read the [Software for Stat220](https://stat220-spring24.netlify.app/software) page
+-   read the [Homework Guidelines for Stat220](https://stat220-spring24.netlify.app/assignments) page
+
+:::
+:::
+
+::: centered-content
+## R Vs Python for data science
+
+::: green-h
+::: font60
+"R is written by statisticians, for statisticians,"
+<span style="float: right;">— Norm Matloff, Author of The Art of R Programming, Prof. of Computer Science, UC Davis</span>
+:::
+:::
+
+<br>
+
+::: bqt
+::: font80
+::: incremental
+Advantages of R over Python:
+
+-   Not so steep learning curve as Python
+-   R has many generic functions that are universal, e.g. `print()`, `plot()`, `summary()`
+-   R Comprehensive R Archive Network (CRAN) has many user-friendly packages
+-   R's basic `help()` and `example()` functions are much more informative than Python's counterparts
+:::
+:::
+:::
+:::
+
+
+
+::: centered-content
+
+### Using R Markdown for Data Science
+
+::: lqt
+::: font60
+
+- In this class, we will use R Markdown for all our work, leveraging its comprehensive support for data science projects.
+- A R Markdown document (`.Rmd`) integrates:
+  - R code for dynamic analysis and visualization.
+  - Descriptive text 
+- Compiling (rendering) a `.Rmd` file produces various output formats
+  - Documents: PDF, HTML, Word.
+  - Presentations: HTML-based slides, PDF slides via Beamer.
+  - Interactive content: Web dashboards, interactive visualizations.
+- R Markdown is engineered with reproducibility as a core principle, facilitating transparent and repeatable research workflows.
+- The presentations for this class is made using Quarto Markdown
+
+:::
+:::
+
+::: footer
+ [R Markdown](https://rmarkdown.rstudio.com/)
+:::
+
+
+:::
+
+::: centered-content
+
+## Version Control using Git and GitHub
+
+::: row
+::: left
+::: font60 
+::: bqt
+- *User:* A Github account for you (e.g., deepbas). 
+- *Organization:* The Github account for one or more user (e.g., DataScienceSpring24). 
+- *Repository:* A folder within the organization that includes files dedicated to a project. 
+- *Local Github:* Copies of Github files located your computer. 
+- *Remote Github:* Github files located on the https://github.com website. 
+- *Clone:* Process of making a local copy of a remote Github repository. 
+- *Pull:* Copy changes on the remote Github repository to your local Github repository. 
+- *Push:* Save local changes to remote Github
+:::
+:::
+:::
+::: right
+<center><img src="images/gitcycle.png" width="75%" height="80%"/> <br> <a>Git Cycle</a></center>
+:::
+:::
+
+::: footer
+Source: Click [here](http://ohi-science.org/data-science-training/)
+:::
+
+:::
+
+::: centered-content
+
+### Using GitHub and Posit for data science
+
+::: bq
+
+- **Integrate R Markdown with GitHub** for version control:
+  - Create a GitHub repository.
+  - Clone the repo and set up a R Markdown project in RStudio.
+  - Work with various files (`.Rmd`, `.r`, `.csv`, etc.).
+  - Commit changes locally and push to GitHub.
+  - Pull updates from others into your local workspace.
+:::
+
+::: hljs
+R Markdown enhances the workflow by seamlessly integrating executable code with narrative text, making your data science projects reproducible and collaborative.
+:::
+
+:::
+
+
+## Glimpse into the course {.smaller .scrollable transition="slide"}
+
+::: panel-tabset
+### Plot
+
+```{r}
+#| echo: false
+library(babynames)
+library(RColorBrewer)
+your_name <- "Dee"
+your_name_data <- babynames %>% filter(name == your_name)
+
+ggplot(data=your_name_data, aes(x=year, y=prop)) +
+  geom_point(size = 3, alpha = 0.6) +
+  geom_line(aes(colour = sex), size = 1) +
+  scale_color_brewer(palette = "Set1") +
+  labs( x = 'Year',
+        y = stringr::str_c('Prop. of Babies Named ', your_name),
+        title = stringr::str_c('Trends in Names: ', your_name)) 
+```
+
+### Code
+
+```{r}
+#| eval: false
+library(babynames)
+your_name <- "Dee"
+your_name_data <- babynames %>% filter(name == your_name)
+
+ggplot(data=your_name_data, aes(x=year, y=prop)) +
+  geom_point(size = 3, alpha = 0.6) +
+  geom_line(aes(colour = sex), size = 1) +
+  scale_color_brewer(palette = "Set1") +
+  labs( x = 'Year',
+        y = stringr::str_c('Prop. of Babies Named ', your_name),
+        title = stringr::str_c('Trends in Names: ', your_name)) 
+```
+:::
+
+
+
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+::: lqt
+-   Make a course folder called 'stat220' either on your [Maize](https://maize.mathcs.carleton.edu/auth-sign-in?appUri=%2F) account or on your local computer
+-   Please download the Class-Activity-1 template from [moodle](https://moodle.carleton.edu/course/view.php?id=43692) and go to [class helper web page](https://stat220-spring24.netlify.app/)
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

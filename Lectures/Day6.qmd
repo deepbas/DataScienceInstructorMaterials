@@ -1,0 +1,485 @@
+---
+title: "Data wrangling with **dplyr**"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+
+
+# load necessary packages
+library(tidyverse)
+library(dplyr)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(forcats)
+library(patchwork)
+library(DT)
+library(moderndive)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(palmerpenguins)
+library(broom)
+library(ggResidpanel)
+library(ggrepel)
+library(maps)
+library(polite)
+library(rvest)
+
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+
+```
+
+
+## Data Wrangling 
+
+The process of cleaning and unifying messy and complex data sets for easy access and analysis
+
+::: cle
+::: font80
+- "data janitor work"
+- importing, cleaning data
+- changing shape of data
+- fixing errors and poorly formatted data elements
+- transforming columns and rows
+- filtering, subsetting
+:::
+
+::: footer
+[Click here for dplyr cheatsheet](https://rstudio.github.io/cheatsheets/data-transformation.pdf)
+:::
+
+:::
+
+
+## The Five Verbs
+
+<br>
+
+Most of the operations on a data table can be achieved with
+
+::: bq
+
+- [select()]{.bold-text} : extract a subset of columns
+- [filter()]{.bold-text} : extract a subset of rows
+- [mutate()]{.bold-text} : create new columns
+- [arrange()]{.bold-text} : order the rows from smallest to largest (or largest to smallest)
+- [summarize()]{.bold-text} : compute a table of summary statistics
+:::
+
+
+
+## Some Operators
+
+::: font80
+
+| Operator | Definition                |
+|----------|---------------------------|
+| `<`      | less than                 |
+| `<=`     | less than or equal to     |
+| `>`      | greater than              |
+| `>=`     | greater than or equal to  |
+| `==`     | exactly equal to          |
+| `!=`     | not equal to              |
+| `x & y`  | `x` AND `y`               |
+| `x %in% y` | test if `x` is in `y`   |
+
+
+:::
+
+
+
+## Find a subset of the columns using *select()*:
+
+[`select()`: take a subset of the columns (variables/features)]{.green-h}
+
+```{r}
+library(babynames)
+babynames %>%
+  select(year, name, n) %>% 
+  head()
+```
+
+
+
+
+## Using **%>%** (pipe operator)
+::: bq
+::: font70
+
+- `%>%` passes result on left into first argument of function on right
+- `Chaining` functions together lets you read `Left-to-right`, `top-to-bottom`
+:::
+:::
+
+```{r, eval=FALSE}
+babynames %>%                   
+  select(year, name, n) %>%
+  head()
+```
+
+
+
+
+```{r, echo=FALSE}
+babynames %>%
+  select(year, name, n) %>%
+  head()
+```
+
+
+
+
+
+## Find a subset of the rows using *filter()*
+
+[`filter()`: take a subset of the rows (observations)]{.green-h}
+
+```{r}
+babynames %>%
+  filter(name == "Bella") %>%
+  head()
+```
+
+
+
+
+
+## Using both *filter()* and *select()*
+
+
+
+```{r}
+babynames %>%
+  filter(name == "Bella") %>%
+  select(year, name, sex, n) %>% 
+  head(10)
+```
+
+
+
+## Using both *filter()* and *select()*
+
+
+```{r}
+babynames %>%
+  filter(name == "Mike", sex == "M", 
+         year %in% c(1995:2005)) %>%
+  select(year, name, n) 
+```
+
+
+
+
+## *arrange()*
+
+[Order rows from smallest to largest]{.green-h}
+
+```{r}
+babynames %>%
+  filter(name == "Mike", sex == "M", 
+         year %in% c(1995:2005)) %>%
+  select(year, name, n) %>% 
+  arrange(n)
+```
+
+
+
+
+
+
+## *arrange(desc())*
+
+[Changes ordering from largest to smallest]{.green-h}
+
+
+```{r}
+babynames %>%
+  filter(name == "Mike", sex == "M", 
+         year %in% c(1995:2005)) %>%
+  select(year, name, n) %>% 
+  arrange(desc(n))
+```
+
+
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+- Please clone the `ca6-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problems 1 and 2 on the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+
+
+
+## *summarize()* or *summarise()*
+
+[If we want to compare summary statistics, we might use `summarize()`]{.green-h}
+
+```{r}
+babynames %>% 
+  filter(name == "Bella" , sex == "F") %>% 
+  summarise(total = sum(n), 
+            max = max(n), 
+            mean = mean(n), 
+            n = n()) # number of rows
+```
+
+
+
+
+
+## Using *group_by()*
+
+```{r}
+babynames %>% 
+  filter(name == "Kaden", !(year %in% c(1880:2005))) %>% 
+  group_by(year)
+```
+
+
+
+
+## Using *group_by()* along with *summarize()*
+
+```{r}
+babynames %>% 
+  filter(name == "Kaden", !(year %in% c(1880:2005))) %>% 
+  group_by(year) %>% 
+  summarize(total = sum(n)) 
+```
+
+
+
+
+
+## *mutate()*
+
+[`mutate()` lets us create new variables based on manipulations of the old variables]{.green-h}
+
+
+```{r}
+babynames %>%
+  group_by(year) %>%
+  mutate(percent = prop * 100) %>% 
+  head()
+```
+
+
+
+
+## Using `mutate()` with `lag()`
+
+```{r}
+babynames %>%
+  filter(name == "Aaron", sex == "M") %>%
+  arrange(year) %>%
+  mutate(change_in_n = if_else(row_number() == 1, 
+                               n,    # for the first row
+                               n - lag(n, 1)))  # for subsequent rows
+```
+
+
+::: middle-align-xy
+
+
+## *min_rank()* : A go to ranking function (ties share the lowest rank)
+
+```{r}
+min_rank(c(50, 100, 1000))
+```
+
+```{r}
+min_rank(desc(c(50, 100, 1000)))
+```
+
+:::
+
+
+
+
+## Slicing and selecting data
+
+::: bql
+
+The slice_ operators let you slice (subset) rows:
+
+- [slice()]{.bold-red} : index rows by their (integer) locations
+- [slice_head(n=5)]{.bold-red} : view the first 5 rows
+- [slice_tail(n=5)]{.bold-red} : view the last 5 rows
+- [slice_sample(n=5)]{.bold-red} : view 5 random rows
+- [slice_min(column, n=5)]{.bold-red} : view the 5 smallest values of a column
+- [slice_max(column, n=5)]{.bold-red} : view the 5 largest values of a column
+:::
+
+
+
+
+::: middle-align-xy
+
+## *slice()*
+
+
+```{r}
+library(gapminder)
+gapminder %>% slice(1:5)
+```
+
+:::
+
+
+::: middle-align-xy
+
+## *slice_max()*
+
+```{r}
+gapminder %>% slice_max(gdpPercap, n=6)
+```
+
+
+:::
+
+
+
+
+## Using `pull()`
+
+[`pull()` is used to extract a single column from a data frame as a vector.]{.green-h}
+
+```{r}
+# find the most common name for each year (2000-2010)
+babynames %>%
+  group_by(year) %>%
+  arrange(desc(n)) %>% 
+  slice_max(order_by = n, n = 1) %>% 
+  ungroup() %>% # to break the group structure
+  pull(name) %>% 
+  unique() # selects unique names
+```
+
+
+
+
+
+## *summarize()* vs. *mutate()*
+
+[`summarize()` : summarize collapses all variable values down to one number (by group)]{.green-h}
+
+```{r}
+gapminder %>% 
+  group_by(continent) %>% 
+  summarize(avg_life_expectancy = mean(lifeExp)) 
+```
+
+
+
+## *summarize()* vs. *mutate()*
+
+[`mutate()` : transforms all variable values but preserves the variable length (by group)]{.green-h}
+
+```{r}
+gapminder %>% 
+  group_by(continent) %>%
+  mutate(AverageLifeExp = mean(lifeExp)) 
+```
+
+
+## *group_by(var1, var2)*
+
+[Any further computations would apply to both grouping variables]{.green-h}
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  summarise(AverageLifeExp = mean(lifeExp)) %>% 
+  slice_max(AverageLifeExp, n = 1)
+```
+
+
+## *ungroup()*
+
+[Any further mutations called on it would not use the grouping for aggregate statistics]{.greeh-h}
+
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  summarise(avg_life_expectancy = mean(lifeExp)) %>% 
+  ungroup() %>% # break the grouping structure
+  slice_max(avg_life_expectancy, n = 1)
+```
+
+
+
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+
+
+::: lqt
+
+- Continue working on the class activity 
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

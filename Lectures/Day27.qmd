@@ -1,0 +1,449 @@
+---
+title: "Decision Trees and Random Forest"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+filters:
+  - shinylive
+  - webr
+---
+
+
+```{r setup, include=FALSE}
+# load necessary packages
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(countdown)
+library(ggthemes)
+library(tidyverse)
+library(stringr)
+library(flipbookr)
+library(htmlwidgets)
+library(lubridate)
+library(palmerpenguins)
+library(fontawesome)
+library(caret)
+library(class)
+library(patchwork)
+library(tidymodels)
+library(mlbench)     # for PimaIndiansDiabetes2 dataset
+library(janitor)
+library(parsnip)
+library(kknn)
+library(paletteer)
+library(corrr)
+library(scico)
+library(skimr)
+library(janitor)
+library(vip)
+library(rpart.plot)
+library(ranger)
+library(palmerpenguins)
+library(ISLR2)
+library(forcats)
+
+
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+data(PimaIndiansDiabetes)
+db <- PimaIndiansDiabetes
+```
+
+
+
+
+## Decision Tree
+
+::: zen
+::: font80
+
+A decision tree algorithm learns by repeatedly splitting the dataset into increasingly smaller subsets to accurately predict the target value.
+
+
+
+::: row
+::: left
+
+- Data is continuously split according to a certain parameter
+
+- Two main entities:
+
+  + nodes: where the data is split
+  + leaves: decisions or final outcomes
+:::
+
+::: right
+
+```{r echo = FALSE}
+knitr::include_graphics("images/taylor-tree.png")
+```
+
+:::
+:::
+
+:::
+:::
+
+## Decision Tree
+
+::: cle
+::: font90
+
+Use features to make subsets of cases that are as similar (“pure”) as possible with respect to the outcome
+
+- Start with all observations in one group
+- Find the variable/feature/split that best separates the outcome
+- Divide the data into two groups (leaves) on the split (node)
+- Within each split, find the best variable/split that separates the outcomes
+- Continue until the groups are too small or sufficiently “pure”
+
+:::
+:::
+
+## Data preparation and pre-processing
+
+::: eqt
+
+```{r}
+data(PimaIndiansDiabetes2)
+db <- PimaIndiansDiabetes2 %>% drop_na() %>%
+  mutate(diabetes = fct_relevel(diabetes, c("neg", "pos")))
+
+set.seed(314) 
+
+db_split <- initial_split(db, prop = 0.75)
+db_train <- db_split %>% training()
+db_test <- db_split %>% testing()
+
+# scaling not needed
+db_recipe <- recipe(diabetes ~ ., data = db_train) %>%
+ step_dummy(all_nominal(), -all_outcomes()) 
+```
+
+:::
+
+## Model Specification
+
+::: cle
+
+- **cost_complexity**: The cost complexity parameter, the minimum improvement in the model needed at each node
+- **tree_depth**: The maximum depth of a tree
+- **min_n**: The minimum number of data points in a node that are required for the node to be split further.
+
+
+```{r}
+tree_model <- decision_tree(cost_complexity = tune(),
+                            tree_depth = tune(),
+                            min_n = tune()) %>% 
+              set_engine('rpart') %>% 
+              set_mode('classification')
+```
+
+:::
+
+## Workflow and Hyperparameter tuning
+
+::: eqt
+
+```{r}
+# Combine the model and recipe into a workflow 
+tree_workflow <- workflow() %>% 
+                 add_model(tree_model) %>% 
+                 add_recipe(db_recipe)
+
+# Create folds for cross validation on the training data set
+db_folds <- vfold_cv(db_train, v = 5, strata = diabetes)
+
+## Create a grid of hyperparameter values to optimize
+tree_grid <- grid_random(cost_complexity(),
+                          tree_depth(),
+                          min_n(), 
+                          size = 10)
+```
+
+:::
+
+## View grid
+
+::: eqt
+
+```{r}
+tree_grid
+```
+
+:::
+
+## [Tuning Hyperparameters with `tune_grid()`]{.font80}
+
+::: vvt
+
+```{r}
+# Tune decision tree workflow
+set.seed(314)
+tree_tuning <- tree_workflow %>% 
+               tune_grid(resamples = db_folds,
+                         grid = tree_grid)
+
+# Select best model based on accuracy
+best_tree <- tree_tuning %>% 
+             select_best(metric = 'accuracy')
+
+# View the best tree parameters
+best_tree
+```
+
+:::
+
+## 
+
+::: zen
+Finalize workflow and fit the model
+
+::: font80
+```{r}
+final_tree_workflow <- tree_workflow %>% finalize_workflow(best_tree)
+tree_wf_fit <- tree_workflow %>% finalize_workflow(best_tree) %>%  fit(data = db_train)
+tree_fit <- tree_wf_fit %>%  extract_fit_parsnip()
+vip(tree_fit)
+```
+
+:::
+:::
+
+## Plot the tree
+
+
+```{r, echo=TRUE, fig.align='center'}
+rpart.plot(tree_fit$fit, roundint = FALSE)
+```
+
+
+::: middle-align-xy
+
+## Train and Evaluate With `last_fit()`
+
+::: mre
+
+```{r}
+tree_last_fit <- final_tree_workflow %>% 
+                 last_fit(db_split)
+
+tree_last_fit %>% collect_metrics()
+```
+
+:::
+:::
+
+
+## Confusion matrix
+
+```{r, fig.height = 4, fig.width = 4.5, fig.align='center', out.width=600, warning=FALSE}
+tree_predictions <- tree_last_fit %>% collect_predictions()
+conf_mat(tree_predictions, 
+truth = diabetes, 
+estimate = .pred_class) %>%  
+autoplot()
+```
+
+
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca27-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 20, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+## Random Forest
+
+::: cle
+::: font80
+
+Random forests take decision trees and construct more powerful models in terms of prediction accuracy.
+
+- <!--The main mechanism that powers this algorithm is--> **Repeated sampling (with replacement)** of the training data to produce a sequence of decision tree models. 
+
+- These models are then averaged to obtain a single prediction for a given value in the predictor space.
+
+- The random forest model selects a random subset of predictor variables for splitting the predictor space in the tree building process. <!--This is done for every iteration of the algorithm, typically 100 to 2,000 times.-->
+
+:::
+:::
+
+## Model Specification
+
+::: cle
+
+- **mtry**: The number of predictors that will be randomly sampled at each split when creating the tree models
+- **trees**: The number of decision trees to fit and ultimately average
+- **min_n**: The minimum number of data points in a node that are required for the node to be split further
+
+:::
+
+
+## [Model, Workflow and Hyperparameter Tuning]{.font80}
+
+::: eqt
+
+```{r}
+rf_model <- rand_forest(mtry = tune(),
+                        trees = tune(),
+                        min_n = tune()) %>% 
+            set_engine('ranger', importance = "impurity") %>% 
+set_mode("classification")
+
+rf_workflow <- workflow() %>% 
+               add_model(rf_model) %>% 
+               add_recipe(db_recipe)
+
+## Create a grid of hyperparameter values to test
+set.seed(314)
+rf_grid <- grid_random(mtry() %>% range_set(c(2, 7)),
+                       trees(),
+                       min_n(),
+                       size = 15)
+```
+
+:::
+
+
+## View Grid
+
+::: eqt
+
+```{r}
+rf_grid
+```
+
+
+:::
+
+
+## Tuning Hyperparameters with `tune_grid()`
+
+::: eqt
+
+```{r}
+# Tune random forest workflow
+set.seed(314)
+
+rf_tuning <- rf_workflow %>% 
+             tune_grid(resamples = db_folds,
+                       grid = rf_grid)
+
+## Select best model based on roc_auc
+best_rf <- rf_tuning %>% 
+           select_best(metric = 'accuracy')
+
+# View the best parameters
+best_rf
+```
+
+:::
+
+
+::: middle-align-xy
+
+## Finalize workflow
+
+::: eqt
+
+```{r}
+final_rf_workflow <- rf_workflow %>% 
+                     finalize_workflow(best_rf)
+```
+
+
+Variable Importance
+
+
+```{r}
+rf_wf_fit <- final_rf_workflow %>% 
+             fit(data = db_train)
+
+rf_fit <- rf_wf_fit %>% 
+          extract_fit_parsnip()
+
+```
+
+:::
+:::
+
+
+## Variable Importance
+
+
+
+```{r fig.width=6, fig.height=4.5, fig.align='center', out.width = "60%"}
+vip(rf_fit)
+```
+
+
+
+
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+<br>
+
+::: lqt
+
+- Please finish the remaining problems in the class activity for today
+
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+

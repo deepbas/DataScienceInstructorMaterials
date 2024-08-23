@@ -1,0 +1,247 @@
+// _layout.scss
+// Base settings and essential layout configurations
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; // Ensures no scroll bars interfere with full-slide elements
+}
+
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.left, .right {
+  flex: 1; // Both take equal space
+  padding: 10px; // Spacing
+}
+
+.left {
+  order: 1; // Ensures the left block appears first
+}
+
+.right {
+  order: 2; // Ensures the right block appears second
+}
+
+
+// Centering content in various contexts
+.centered-content, .middle-align {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+  width: 100vw;
+}
+
+// Full width and full slide image styling
+.full-slide-img img, .image-overlay-container img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.middle-align-xy {
+  margin: 0;
+  position: absolute;
+  top: 20%;
+  left: 2%;
+  -ms-transform: translateY(-50%), translateX(-50%);
+  transform: translateY(-50%), translateX(-50%);
+}
+
+
+
+.inverse {
+  background-color: #349632;
+  color: #fff;
+}
+
+.inverse h1, .inverse h2, .inverse h3 {
+  color: #FFD700;
+}
+
+.note {
+  font-size: 0.8em;
+  font-style: italic;
+  background-color: #f0f0f0;
+  color: #333;
+  padding: 0.25em;
+  margin-top: 0.5em;
+  border-left: 4px solid #007bff;
+  display: block;
+}
+
+
+
+// Table styling for clarity and visual segmentation
+table {
+  thead th {
+    background-color: #007bff;
+    color: white;
+  }
+
+  tbody tr:nth-child(odd) {
+    background-color: #f2f2f2;
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: #dddddd;
+  }
+
+  tr td.important {
+    background-color: #ffdd59;
+    color: black;
+  }
+}
+
+// Preformatted text handling for code blocks
+pre, .remark-code, .remark-inline-code {
+  overflow-x: auto;  /* Horizontal scrollbar if needed */
+  overflow-y: auto;  /* Vertical scrollbar if needed */
+  max-height: 400px; /* Set a max height to force overflow to scroll */
+}
+
+
+
+
+// Image effects and hover behaviors
+img {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+
+// Additional responsive image styling
+.img-stretch {
+  width: 100%;
+  height: auto;
+}
+
+
+/* Hover effect to slightly enlarge images */
+img:hover {
+  transform: scale(1.05); // Enlarges the image on hover
+}
+
+/* Stacking images with a slight overlap */
+.img-stack {
+  position: relative; // Needed for absolute positioning inside
+  display: inline-block; // Align images in line
+}
+
+.img-stack img {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  &:not(:first-child) {
+    top: 20px; // Stacks images with an offset of 20px
+  }
+}
+
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.full-slide-html {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+
+
+.image-overlay-container {
+  position: relative;
+  display: inline-block; /* Makes the container fit the image */
+}
+
+.image-overlay-container img {
+  display: block; /* Removes bottom space/gap */
+}
+
+.image-overlay-container {
+  position: relative;
+  width: 100%; /* or the width of your image */
+}
+
+.overlay-text {
+  position: absolute;
+  top: 10%; /* Adjust this value to position the text */
+  left: 10%; /* Adjust this value to position the text */
+  color: white; /* Text color */
+  font-size: 24px; /* Text size */
+  background-color: rgba(0, 0, 0, 0.5); /* Background color for text */
+}
+
+.hscroll {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.vscroll {
+  overflow-y: auto;
+  white-space: nowrap;
+}
+
+// Adjust the height of the Shiny application container
+.shinylive-container {
+  height: 100vh; // Use 100% of the viewport height
+}
+
+// Ensure the Shiny content fills the container fully
+.shiny-output-panel, .shiny-plot-output, .shiny-bound-output {
+  height: 100%;
+}
+
+// Additional styles to ensure full height usage and layout adjustments
+.body, .content {
+  margin: 0;
+  padding: 0;
+  display: block;
+  height: 100%;
+}
+
+/* Target the Quarto output block specifically */
+div.shinylive-container {
+  height: auto; /* Adjust height automatically based on content */
+  min-height: 100%; /* Ensure it fills at least the full height of its container */
+}
+
+/* Ensure the Shiny app fills the container */
+.shinylive-app {
+  height: 100%;
+}
+
+/* Remove any excess padding or margins that might be adding unwanted space */
+.shinylive-app, .shiny-output-panel, .shiny-bound-output {
+  padding: 0;
+  margin: 0;
+}
+
+/* Adjust specific elements within the Shiny output */
+div.shiny-output-panel {
+  margin-bottom: 0;
+}
+
+/* Eliminate bottom padding or margins from all elements within the Shiny app */
+.shinylive-app * {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+

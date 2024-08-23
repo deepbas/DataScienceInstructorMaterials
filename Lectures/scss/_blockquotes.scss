@@ -1,0 +1,371 @@
+// _blockquotes.scss
+blockquote, .bqt {
+  display: block;
+  font-size: 0.9em;
+  margin: 0.05em 10px;
+  border: solid 4px #6A5ACD;
+  border-left-width: 10px;
+  box-shadow: 0 0 15px rgba(255,255,255,0.8);
+  background-color: #FFC0CB;
+  color: #000;
+  padding: 0.25em;
+  border-radius: 15px;
+  list-style-type: "✨";
+  
+  ul li::marker {
+    margin-bottom: 5px;
+    color: orange;
+    font-size: 1em;
+  }
+}
+
+
+blockquote, .bql {
+  display: block;
+  margin: 0.05em 5px; // Slightly tightened margins
+  border-left: solid 5px #006699;
+  border-top: solid 2px #ffcc00;
+  border-bottom: solid 2px #ffcc00;
+  border-right: solid 2px #006699;
+  box-shadow: 0 0 3px rgba(0,0,0,0.5);
+  background-color: rgba(255,255,255,1);
+  color: #000;
+  padding: 0.25em; // Reduced padding
+  border-radius: 10px;
+  font-size: 0.9em; // Reduced font size
+  font-style: italic;
+  font-weight: bold;
+  text-align: left;
+  line-height: 1.3em; // Slightly reduced line height for tighter text
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 1px rgba(0,0,0,0.5);
+  list-style-type: "💫";
+  
+  ul li::marker {
+    margin-bottom: 5px; // Reduced space below list item markers
+    color: orange;
+    font-size: 1.2em; // Adjusted marker font size for consistency
+  }
+}
+
+
+
+blockquote, .bq {
+  display: block;
+  font-size: 0.9em; // Reduced font size
+  margin: 0.02em 5px; // Margin adjustments for compactness
+  border-left: solid 5px #4CAF50; // Changed to a green shade for freshness
+  border-top: solid 2px #FFC107; // Changed to amber for a bright contrast
+  border-bottom: solid 2px #FFC107; // Same as border-top
+  border-right: solid 2px #4CAF50; // Same as border-left for consistency
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2); // Softened the shadow for subtlety
+  background-color: #E8F5E9; // Light green background for soft appeal
+  color: #1B5E20; // Dark green text for readability
+  padding: 0.25em; // Reduced padding
+  border-radius: 10px; // Kept for rounded corners
+  font-weight: bold; // Kept bold font weight for emphasis
+  line-height: 1.3em; // Adjusted for reduced font size and padding
+
+  ul li::marker {
+    margin-bottom: 5px; // Reduced space below list item markers
+    color: #FF9800; // Changed to orange for visibility
+    font-size: 1.2em; // Slightly smaller markers
+  }
+}
+
+
+
+blockquote, .lqt {
+  display: block;
+  margin: 0.05em 5px;
+  border-left: solid 5px #2196F3; // Light Blue
+  border-top: solid 2px #FFEB3B; // Yellow
+  border-bottom: solid 2px #FFEB3B; // Yellow
+  border-right: solid 2px #2196F3; // Light Blue
+  box-shadow: 0 0 3px rgba(0,0,0,0.3); // Softer shadow
+  background-color: #E3F2FD; // Very light blue
+  color: #1A237E; // Deep Blue
+  padding: 0.25em;
+  border-radius: 10px;
+  font-size: 0.9em; // Smaller font size
+  font-style: italic;
+  font-weight: bold;
+  text-align: left;
+  line-height: 1.3em; // Tighter line height
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 1px rgba(0,0,0,0.3); // Softer text shadow
+  list-style-type: "💫";
+  
+  ul li::marker {
+    margin-bottom: 5px; // Less space below markers
+    color: #FFC107; // Amber for visibility
+    font-size: 1.2em; // Slightly smaller markers
+  }
+}
+
+
+
+blockquote, .eqt {
+  display: block;
+  font-size: 0.9em; /* Smaller font size */
+  margin: 0.02em 5px;
+  border-left: solid 5px #FF7043; /* Lighter red for left border */
+  border-top: solid 2px #FFAB91; /* Soft peach for top border */
+  border-bottom: solid 2px #FFAB91; /* Soft peach for bottom border */
+  border-right: solid 2px #FF7043; /* Lighter red for right border */
+  box-shadow: 0 0 6px rgba(0,0,0,0.2); /* Softer shadow */
+  background-color: #FBE9E7; /* Very light red background */
+  color: #D84315; /* Milder dark red for text */
+  padding: 0.25em;
+  font-weight: bold;
+  border-radius: 10px;
+  list-style-type: "💫";
+  
+  ul li::marker {
+    margin-bottom: 5px; /* Reduced space below markers */
+    color: #FFCCBC; /* Light peach for marker, ensuring visibility */
+    font-size: 1.2em; /* Adjusted marker size */
+  }
+}
+
+// Bold and Blue (bbb)
+blockquote, .bbb {
+  display: block;
+  font-size: 0.85em;
+  margin: 0.5em 10px;
+  border: solid 4px #3F51B5;
+  border-left-width: 12px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  background-color: #BBDEFB;
+  color: #1A237E;
+  padding: 0.5em;
+  border-radius: 5px;
+  font-weight: bold;
+  ul li::marker {
+    color: #FFA000;
+    font-size: 1.1em;
+  }
+}
+
+// Classic Elegance (cle)
+blockquote, .cle {
+  display: block;
+  font-size: 0.95em;
+  margin: 1em 10px;
+  border: solid 3px #795548;
+  border-left-width: 15px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  background-color: #EFEBE9;
+  color: #3E2723;
+  padding: 0.75em;
+  border-radius: 10px;
+  font-style: italic;
+  font-family: 'Times New Roman', serif;
+  ul li::marker {
+    color: #BF360C;
+    font-size: 1.3em;
+  }
+}
+
+// Fresh Spring (fsp)
+blockquote, .fsp {
+  display: block;
+  font-size: 0.9em;
+  margin: 0.75em 10px;
+  border: solid 3px #4CAF50;
+  border-left-width: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  background-color: #C8E6C9;
+  color: #1B5E20;
+  padding: 0.5em;
+  font-style: normal;
+  font-weight: 500;
+  ul li::marker {
+    color: #FFEB3B;
+    font-size: 1.4em;
+  }
+}
+
+// Deep Sea (dse)
+blockquote, .dse {
+  display: block;
+  font-size: 0.85em;
+  margin: 0.5em 10px;
+  border: solid 4px #01579B;
+  border-left-width: 15px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  background-color: #B3E5FC;
+  color: #0D47A1;
+  padding: 0.5em;
+  border-radius: 5px;
+  font-weight: bold;
+  ul li::marker {
+    color: #FFC107;
+    font-size: 1.5em;
+  }
+}
+
+
+// Purple Majesty (prm)
+blockquote, .prm {
+  display: block;
+  font-size: 0.9em;
+  margin: 0.5em 10px;
+  border: solid 4px #7B1FA2; // Deep purple for border
+  border-left-width: 12px;
+  box-shadow: 0 0 5px rgba(128,0,128,0.3); // Purple shadow for depth
+  background-color: #E1BEE7; // Lavender background for contrast
+  color: #4A148C; // Dark purple for text
+  padding: 0.5em;
+  border-radius: 5px;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+  ul li::marker {
+    color: #D1C4E9; // Light purple for markers
+    font-size: 1.1em;
+  }
+}
+
+// Maroon Elegance (mre)
+blockquote, .mre {
+  display: block;
+  font-size: 0.85em;
+  margin: 0.5em 10px;
+  border: solid 4px #880E4F; // Maroon for the border
+  border-left-width: 10px;
+  box-shadow: 0 0 5px rgba(136,14,79,0.3); // Subtle maroon shadow
+  background-color: #F8BBD0; // Light pink background for soft appeal
+  color: #560027; // Dark maroon for text readability
+  padding: 0.5em;
+  border-radius: 8px;
+  font-style: italic;
+  font-weight: bold;
+  text-align: left;
+  ul li::marker {
+    color: #FF80AB; // Soft pink for marker
+    font-size: 1.3em;
+  }
+}
+
+// Warm Serenity (ws)
+blockquote, .ws {
+  display: block;
+  font-size: 0.95em;
+  margin: 1em 10px;
+  border: solid 3px #8D6E63; /* Warm brown, softer */
+  border-left-width: 15px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  background-color: #D7CCC8; /* Lighter, warm beige */
+  color: #5D4037; /* Deep, warm brown */
+  padding: 0.75em;
+  border-radius: 10px;
+  font-style: italic;
+  font-family: 'Times New Roman', serif;
+  ul li::marker {
+    color: #FF7043; /* Bright, warm orange */
+    font-size: 1.3em;
+  }
+}
+
+// Zen Aura (zen)
+blockquote, .zen {
+  display: block;
+  font-size: 0.9em;
+  margin: 0.5em 10px;
+  border: solid 3px #00BCD4;
+  border-left-width: 12px;
+  box-shadow: 0 0 4px rgba(0, 188, 212, 0.3);
+  background-color: #E0F7FA;
+  color: #006064;
+  padding: 0.5em;
+  border-radius: 8px;
+  font-weight: 500;
+  ul li::marker {
+    color: #B2EBF2;
+    font-size: 1.1em;
+  }
+}
+
+// Vintage Velvet (vvt)
+blockquote, .vvt {
+  display: block;
+  font-size: 0.85em;
+  margin: 0.5em 10px;
+  border: solid 4px #6A1B9A;
+  border-left-width: 10px;
+  box-shadow: 0 0 6px rgba(106, 27, 154, 0.3);
+  background-color: #F3E5F5;
+  color: #4A148C;
+  padding: 0.5em;
+  border-radius: 5px;
+  font-weight: bold;
+  ul li::marker {
+    color: #EDE7F6;
+    font-size: 1.2em;
+  }
+}
+
+// Sunset Bliss (sub)
+blockquote, .sub {
+  display: block;
+  font-size: 0.6em;
+  margin: 0.5em 5px;
+  border: solid 3px #EF5350;
+  border-left-width: 8px;
+  box-shadow: 0 0 8px rgba(239, 83, 80, 0.2);
+  background-color: #FFE0B2;
+  color: #C62828;
+  padding: 0.5em;
+  border-radius: 10px;
+  font-weight: bold;
+  ul li::marker {
+    color: #FFCC80;
+    font-size: 1.3em;
+  }
+}
+
+// Mystic Forest (mft)
+blockquote, .mft {
+  display: block;
+  font-size: 0.6em;
+  margin: 0.5em 5px;
+  border: solid 4px #2E7D32;
+  border-left-width: 12px;
+  box-shadow: 0 0 5px rgba(46, 125, 50, 0.4);
+  background-color: #E8F5E9;
+  color: #1B5E20;
+  padding: 0.5em;
+  border-radius: 5px;
+  font-weight: bold;
+  ul li::marker {
+    color: #C8E6C9;
+    font-size: 1.1em;
+  }
+}
+
+// Ocean Whisper (owh) blockquote style adapted for dynamic slide presentation
+blockquote, .owh {
+  display: block;
+  font-size: 0.95em; // Slightly smaller font size for clarity
+  margin: 0; // Remove margins to fit slide dimensions
+  padding: 1em; // Add padding for text inside block
+  border: solid 3px #0288D1; // Blue border
+  border-left-width: 15px; // Thicker left border for emphasis
+  background-color: #B3E5FC; // Light blue background
+  color: #01579B; // Dark blue text color
+  box-shadow: 0 0 10px rgba(2, 136, 209, 0.2); // Subtle shadow for depth
+  border-radius: 0; // No rounded corners for a cleaner fit in slides
+  width: 100%; // Full width to use the entire slide space
+  height: auto; // Height is automatic to adjust to content
+  box-sizing: border-box; // Include padding and border in the width and height calculations
+  position: relative; // Use relative positioning to flow with other content
+  top: 0; // Align top to its normal position
+  left: 0; // Align left to its normal position
+}
+
+ul li::marker {
+  color: #81D4FA; // Light blue markers for list items
+  font-size: 1.3em; // Larger marker for visibility
+}
+
+

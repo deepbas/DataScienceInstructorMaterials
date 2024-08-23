@@ -1,0 +1,294 @@
+---
+title: "Introduction to Shiny"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(forcats)
+library(flipbookr)
+library(patchwork)
+library(DT)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(lubridate)
+library(plotly)
+library(polite)
+library(rvest)
+library(stringr)
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+```
+
+
+
+
+::: middle-align-xy
+
+## Introducing Shiny
+
+::: bql
+
+- A special R package for making your data interactive.
+- Turns your analyses into interactive web apps.
+
+:::
+:::
+
+
+## [Create and Host Interactive Dashboards]{.font80}
+
+::: cle
+::: font80
+
+- **Interactive Dashboards**: Easily create dynamic dashboards in R. No web development skills required!
+- **Hosting Made Easy**: Develop in RStudio and host your apps seamlessly on the web using RStudio’s servers.
+- **ShinyApps.io**: Publish and share your interactive graphs and data analyses on ShinyApps.io, making your work accessible worldwide.
+- **ShinyLive Integration**: Utilize ShinyLive for enhanced real-time interactions without server setup, directly running R applications in the browser.
+
+:::
+:::
+
+## Engaging Data Visualizations
+
+::: zen
+::: font90
+
+- **Interactive Visualizations**: Shiny turns your static data into engaging experiences by allowing interactive graphs and tables.
+- **Responsive and Live Updates**: Shiny listens to user inputs, updating outputs automatically to reflect changes, enhancing user experience and engagement.
+- **ShinyLive Features**: Extend functionalities with ShinyLive, enabling more complex user interactions directly within web browsers, without the need for additional server resources.
+
+:::
+:::
+
+::: {.column-screen}
+
+##
+
+```{=html}
+<iframe width="1980" height="1320" src="https://shiny.posit.co/r/getstarted/shiny-basics/lesson1/index.html" title="Webpage example"></iframe>
+```
+
+:::
+
+
+
+
+## Building Blocks of a Shiny App
+
+::: mft
+
+- Every Shiny app has two main parts:
+  + **User Interface (UI):** What you see on the screen.
+  + **Server Function:** The brain behind the scenes doing the calculations.
+- You combine these with `shinyApp` to make your interactive web app.
+
+- To tell RStudio it’s a Shiny app, add `runtime: shiny` to the top of your R Markdown file.
+
+:::
+
+## Useful Resources
+
+::: mft
+
+- [Shiny RStudio Documentation](https://shiny.rstudio.com/articles/basics.html)
+
+- [Shiny Documents for further reading](https://bookdown.org/yihui/rmarkdown/shiny-documents.html)
+
+- [Learn Shiny with videos and written tutorials](https://shiny.rstudio.com/tutorial/)
+
+- [Shiny Gallery with example demonstrations](https://shiny.rstudio.com/gallery/)
+
+- [Mastering Shiny by Hadley Wickham](https://mastering-shiny.org/index.html)
+
+- [Shiny Cheatsheet](https://rstudio.github.io/cheatsheets/shiny.pdf)
+
+:::
+
+
+::: {.column-screen}
+
+## 
+
+```{=html}
+<iframe width="1980" height="1320" src="https://shiny.rstudio.com/gallery/covid19-tracker.html" title="Webpage example"></iframe>
+```
+
+:::
+
+##
+
+::: {.column-screen}
+
+![](images/shiny_cheatsheet.png)
+
+[Link [here](https://rstudio.github.io/cheatsheets/shiny.pdf)]{.footer}
+
+:::
+
+##
+
+::: {.full-slide-img}
+
+![](images/shiny_configuration.png)
+
+:::
+
+
+
+
+
+## Hello World 
+
+```r
+library(shiny)
+ui <- fluidPage("Hello World!")
+server <- function(input, output) {}
+shinyApp(ui = ui, server = server)
+```
+
+
+
+## Add more information 
+
+```r
+library(shiny)
+ui <- fluidPage(
+  titlePanel("Tracking Covid in Minnesota"),
+  h1("Some nice header"),
+  "elements1",
+  "elements2",
+  br(),
+  "things1",
+  strong("things2")
+  )
+server <- function(input, output) {}
+shinyApp(ui = ui, server = server)
+```
+
+
+## Add a layout 
+
+```r
+fluidPage(
+  titlePanel("Tracking Covid in Minnesota"),
+  sidebarLayout(sidebarPanel("our inputs will go here"),
+                mainPanel("the results will go here"))
+)
+```
+
+
+## Navigation Page layout
+
+
+```r
+ui <- navbarPage("My App",
+    tabPanel("Plot", plotOutput("plot")),
+    tabPanel("Summary", verbatimTextOutput("summary")),
+    tabPanel("Table", tableOutput("table"))
+)
+server <- function(input, output) {}
+shinyApp(ui = ui, server = server)
+```
+
+
+## Tabset Panel Layout {.shinylive-r}
+
+```r
+ui <- fluidPage(
+    titlePanel("My Tabbed App"),
+    sidebarLayout(sidebarPanel("Inputs here"),
+        mainPanel(tabsetPanel(
+                tabPanel("Plot", plotOutput("plot")),
+                tabPanel("Summary", verbatimTextOutput("summary")),
+                tabPanel("Table", DTOutput("table")))))
+)
+server <- function(input, output) {}
+shinyApp(ui = ui, server = server)
+```
+
+
+## Using Shiny Themes
+
+```r
+library(shiny)
+library(shinythemes)
+
+ui <- fluidPage(theme = shinytheme("flatly"), 
+    titlePanel("Themed Shiny App"),
+    sidebarLayout(
+        sidebarPanel("Sidebar content"),
+        mainPanel("Main content")
+    )
+)
+server <- function(input, output) {}
+shinyApp(ui = ui, server = server)
+```
+
+
+
+
+::: {.column-screen}
+
+## Input-Output Pairs
+
+
+```{=html}
+<iframe width="1980" height="1320" src="https://shinylive.io/r/editor/#code=NobwRAdghgtgpmAXGKAHVA6ASmANGAYwHsIAXOMpMAGwEsAjAJykYE8AKAZwAtaJWAlAB0IIgK60ABAB4AtJIBm1CQBMAClADmcdiMn7JpWqWpwNEONV1gAsq0kBlXv0kBBdELADceg51oqcPQsADJQrERipLoQBnGS-oHBjOaWMfEZCXSBjACSEKhR1pzZcIyeuJKeAMLcRESccJJQkhBiMPRliBWSAIyVvQAMg5UArIPCsZnevhkwUHypVrOZ+uQAHqQA8lGF0Z6McJxi1KSek6sXBpOTIo2MAG5lMvIKYhAERiTsfHuVkaQ9gJJCAVgC9gASQ7HU4vSSHCA5AAqcE27FBUwyqCgnHI1gAmpEEpY4J84Coer8ohCSgEyld9ABfSaMkR3ZysdyodgSSQAXkkEkq9yejH5xMe9LAjIAukA" title="Webpage example"></iframe>
+```
+
+:::
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca18-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 30, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+

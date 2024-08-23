@@ -1,0 +1,796 @@
+---
+title: "Cross Validation and Linear Regression"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+filters:
+  - shinylive
+  - webr
+---
+
+
+```{r setup, include=FALSE}
+# load necessary packages
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(countdown)
+library(ggthemes)
+library(tidyverse)
+library(stringr)
+library(htmlwidgets)
+library(lubridate)
+library(palmerpenguins)
+library(fontawesome)
+library(class)
+library(patchwork)
+library(tidymodels)
+library(mlbench)     # for PimaIndiansDiabetes2 dataset
+library(janitor)
+library(parsnip)
+library(kknn)
+library(paletteer)
+library(corrr)
+library(scico)
+library(gridExtra)
+
+
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+standardize <- function(x, na.rm = FALSE) {
+  (x - mean(x, na.rm = na.rm)) / sd(x, na.rm = na.rm)
+}
+
+# Load the fire data
+fire <- read_csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/Algeriafires.csv")
+fire <- fire %>% clean_names() %>% na.omit() %>% mutate_at(c(10,13), as.numeric)
+fire1 <- fire %>% mutate(across(where(is.numeric), standardize))
+
+fire_raw <- fire %>% select(temperature, isi, classes)
+
+
+fire1 <- fire %>% 
+  mutate(across(where(is.numeric), standardize)) %>% 
+  mutate(classes = as.factor(classes))
+
+
+fire_recipe <- recipe(classes ~ ., data = fire_raw) %>%
+ step_scale(all_predictors()) %>%
+ step_center(all_predictors()) %>% 
+ prep()  
+
+fire_scaled <- bake(fire_recipe, fire_raw)
+
+fire_knn_spec <- nearest_neighbor(mode = "classification",
+                             engine = "kknn",
+                             weight_func = "rectangular",
+                             neighbors = 5)
+
+fire_knn_fit <- fire_knn_spec %>%
+ fit(classes ~ ., data = fire_scaled)
+
+
+data(PimaIndiansDiabetes2)
+db <- PimaIndiansDiabetes2
+db <- db %>% drop_na() %>% mutate(diabetes = fct_rev(factor(diabetes))) 
+```
+
+
+
+## Resampling methods
+
+<center>
+<img src="images/resampling.png" style="width:60%; height:auto;"> <br>
+</center>
+
+Create a series of data sets similar to the training/testing split, always used with the training set
+
+
+[[Kuhn and Johnson (2019)](https://bookdown.org/max/FES/resampling.html)]{.footer}
+
+
+```{r echo=FALSE, comment=NULL}
+set.seed(12345)
+fire1 <- fire %>% 
+  mutate(across(where(is.numeric), standardize)) %>% 
+  mutate(classes = as.factor(classes))
+
+fire_split <- initial_split(fire1, prop = 0.5)
+
+# Create training data
+fire_train <- fire_split %>%
+                    training()
+
+
+# Create testing data
+fire_test <- fire_split %>%
+                    testing()
+```
+
+
+```{r, echo=FALSE}
+fire_knn_spec <- nearest_neighbor(mode = "classification",
+                             engine = "kknn",
+                             weight_func = "rectangular",
+                             neighbors = 5)
+
+fire_recipe <- recipe(classes ~ ., data = fire_raw) %>%
+ step_scale(all_predictors()) %>%
+ step_center(all_predictors()) 
+
+fire_knn_wkflow <- workflow() %>%
+  add_recipe(fire_recipe) %>%
+  add_model(fire_knn_spec)
+
+
+fire_knn_fit <- fit(fire_knn_wkflow, data = fire_train)
+
+test_features <- fire_test %>% select(temperature, isi) %>% data.frame()
+
+nn1_pred <- predict(fire_knn_fit, test_features, type = "raw")
+
+fire_results <- fire_test %>% 
+  select(classes) %>% 
+  bind_cols(predicted = nn1_pred)
+  
+
+#create a prediction pt grid
+
+temp_grid <- seq(min(fire1$temperature), max(fire1$temperature), length.out = 100)
+isi_grid <- seq(min(fire1$isi), max(fire1$isi), length.out = 100)
+plot_grid <- expand.grid(temperature = temp_grid, isi = isi_grid)
+
+knn_pred_grid <- predict(fire_knn_fit, plot_grid, type = "raw")
+
+prediction_table <- bind_cols(plot_grid, data.frame(classes = knn_pred_grid))
+```
+
+
+
+## Why not to use single (training) test set
+
+```{r, echo=FALSE, fig.width=8, fig.height=4.5, fig.align='center', out.width = "90%"}
+ts1 <- ggplot(data = fire_train) +
+  geom_point(data = prediction_table, aes(x = temperature, y = isi, color = classes), alpha = 0.05) +
+  geom_point(aes(x = temperature, y = isi, color = classes), alpha = 0.5) +
+  labs(x = "Temperature", y = "Initial Spread Index (ISI)") +
+  scale_fill_wsj() +
+  scale_color_wsj() +
+  theme_light() +
+  theme(legend.position = "none")  +
+  ggtitle("Training set #1") + theme(plot.title = element_text(hjust = 0.5))
+
+
+
+set.seed(143)
+fire_split1 <- initial_split(fire1, prop = 0.75)
+
+# Create training data
+fire_train1 <- fire_split1 %>%
+                    training()
+
+
+# Create testing data
+fire_test1 <- fire_split1 %>%
+                    testing()
+
+
+fire_knn_spec <- nearest_neighbor(mode = "classification",
+                             engine = "kknn",
+                             weight_func = "rectangular",
+                             neighbors = 5)
+
+fire_knn_wkflow <- workflow() %>%
+  add_recipe(fire_recipe) %>%
+  add_model(fire_knn_spec)
+
+
+fire_knn_fit1 <- fit(fire_knn_wkflow, data = fire_train1)
+
+test_features1 <- fire_test1 %>% select(temperature, isi) %>% data.frame()
+
+nn1_pred1 <- predict(fire_knn_fit1, test_features1, type = "raw")
+
+fire_results1 <- fire_test1 %>% 
+  select(classes) %>% 
+  bind_cols(predicted = nn1_pred1)
+  
+
+#create a prediction pt grid
+
+knn_pred_grid1 <- predict(fire_knn_fit1, plot_grid, type = "raw")
+
+prediction_table1 <- bind_cols(plot_grid, data.frame(classes = knn_pred_grid1))
+
+
+
+ts2 <- ggplot(data = fire_train1) +
+  geom_point(data = prediction_table1, aes(x = temperature, y = isi, color = classes), alpha = 0.05) +
+  geom_point(aes(x = temperature, y = isi, color = classes), alpha = 0.5) +
+  labs(x = "Temperature", y = "Initial Spread Index (ISI)") +
+  scale_fill_wsj() +
+  scale_color_wsj() +
+  theme_light() +
+  theme(legend.position = "none") +
+  ggtitle("Training set #2") + theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(ts1,ts2, ncol = 2) 
+
+```
+
+
+---
+
+## Cross validation
+
+![](images/k-folds.png)
+
+Idea: Split the training data up into multiple training-validation pairs, evaluate the classifier on each split and average the performance metrics
+
+
+[Image courtesy of Dennis Sun]{.footer}
+
+
+
+## k-fold cross validation
+
+::: cle
+::: font80
+
+1. split the data into $k$ subsets
+
+2. combine the first $k-1$ subsets into a training set and train the classifier
+
+3. evaluate the model predictions on the last (i.e. $k$th) held-out subset
+
+4. repeat steps 2-3 $k$ times (i.e. $k$ "folds"), each time holding out a different one of the $k$ subsets
+
+5. calculate performance metrics from each validation set
+
+6. average each metric over the $k$ folds to come up with a single estimate of that metric
+
+:::
+:::
+
+
+<!--
+
+##
+
+```{r echo=FALSE, out.width = "75%", fig.width = 5, fig.height = 3, fig.align='center'}
+#rm(accuracy, ppv)
+#detach(package:caret)
+train_complete <- fire_raw
+
+fire_recipe <- recipe(
+  classes ~  temperature + isi, 
+  data = train_complete
+) %>%
+  step_scale(all_predictors()) %>%
+  step_center(all_predictors())
+
+knn_spec <- nearest_neighbor(
+  weight_func = "rectangular", 
+  neighbors = tune() #<<
+) %>%
+  set_engine("kknn") %>%
+  set_mode("classification")
+
+set.seed(1234)
+
+fire_vfold <- vfold_cv(fire_raw, v = 5, strata = classes, repeats = 10)
+
+k_vals <- tibble(neighbors = seq(from = 1, to = 15, by = 1))
+
+knn_fit <- workflow() %>%
+  add_recipe(fire_recipe) %>%
+  add_model(knn_spec) %>%
+  tune_grid(
+    resamples = fire_vfold, 
+    grid = k_vals,
+    metrics = metric_set(accuracy, sensitivity, specificity, ppv, kap, mcc)
+    )
+
+cv_metrics <- collect_metrics(knn_fit)
+
+ggplot(cv_metrics %>% filter(.metric == "accuracy"), aes(x = neighbors, y = mean)) +
+  geom_point() + 
+  geom_line() +
+  labs(x = "#Neighbors", y = "Accuracy (Cross-Validation)") +
+  theme_light() +
+  scale_x_continuous(breaks = 1:15, minor_breaks = NULL) + 
+  scale_y_continuous(limits = c(0.93,0.96))
+
+```
+
+
+Based on accuracy, $k=4$ appears best, We can look at other metrics. Notice that accuracy doesn't always decrease with $k$
+
+-->
+
+::: middle-align-xy
+
+## 5-fold cross validation
+
+::: eqt
+
+Creating the recipe
+
+
+```{r}
+fire_recipe <- recipe(classes ~  temperature + isi, data = fire_train) %>%
+  step_scale(all_predictors()) %>%
+  step_center(all_predictors()) 
+```
+
+:::
+:::
+
+## 5-fold cross validation
+
+::: eqt
+
+Create your model specification and use `tune()` as a placeholder for the number of neighbors
+
+```{r}
+knn_spec <- nearest_neighbor(mode = "classification",
+                             engine = "kknn",
+                             weight_func = "rectangular", 
+                             neighbors = tune())  
+```
+
+
+Split the `fire_train` data set into `v = 5` folds, stratified by `classes`
+
+```{r}
+# replicate 5-fold cross-validation 10 times
+fire_vfold <- vfold_cv(fire_train, v = 5, strata = classes, repeats = 10)
+```
+
+:::
+
+## 5-fold cross validation
+
+::: eqt
+
+Create a grid of $K$ values, the number of neighbors
+
+```{r}
+k_vals <- tibble(neighbors = seq(from = 1, to = 40, by = 1))
+```
+
+
+Run 5-fold CV on the `k_vals` grid, storing four performance metrics
+
+```{r}
+knn_fit <- workflow() %>%
+  add_recipe(fire_recipe) %>%
+  add_model(knn_spec) %>%
+  tune_grid(resamples = fire_vfold, 
+            grid = k_vals,
+            metrics = metric_set(accuracy, sensitivity, specificity, ppv))
+```
+
+:::
+
+## Choosing K
+
+::: eqt
+
+Collect the performance metrics 
+
+
+```{r}
+cv_metrics <- collect_metrics(knn_fit)
+cv_metrics %>% head(6)
+```
+
+:::
+
+## Choosing K
+
+::: eqt
+
+Collect the performance metrics and find the best model
+
+
+```{r}
+cv_metrics %>%
+  group_by(.metric) %>%
+  slice_max(mean) 
+```
+
+:::
+
+## Choosing K: Visualization
+
+```{r, echo=FALSE, fig.width=8, fig.height=4.5, fig.align='center', out.width = "90%"}
+final.results <- cv_metrics %>%  mutate(.metric = as.factor(.metric)) %>%
+  select(neighbors, .metric, mean)
+
+final.results %>%
+  ggplot(aes(x = neighbors, y = mean, color = forcats::fct_reorder2(.metric, neighbors, mean))) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  theme_minimal() +
+  scale_color_wsj() + 
+  scale_x_continuous(breaks = k_vals[[1]]) +
+  theme(panel.grid.minor.x = element_blank())+
+  labs(color='Metric', y = "Estimate", x = "K") +
+  theme(panel.grid.minor.x = element_blank(),
+        axis.text=element_text(size=6, angle = 20))
+```
+
+
+
+## The full process
+<center>
+![](images/cv-5.png)
+</center>
+
+[Image source: [rafalab.github.io/dsbook/](rafalab.github.io/dsbook/)]{.footer}
+
+
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca23-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+## Supervised Learning 
+
+<br>
+
+::: zen
+
+- *Supervised learning:* Learning a function that maps an input to an output based on example `inputoutput` pairs.
+- *Function:* $\mathrm{y}=\mathrm{f}(\mathrm{x})$, where $\mathrm{y}$ is the label (output) we predict, and $\mathrm{x}$ is the feature(s) (input).
+- **Goal:** Find a function that calculates $y$ from $x$ values accurately for all cases in the training dataset.
+
+:::
+
+## Linear Regression: The Basics
+
+::: cle
+::: font70
+
+Linear regression fits a linear equation to observed data to describe the relationship between variables.
+
+ $$y=\beta_0 + \beta_1x_1 + \beta_2x_2 + \cdots + \epsilon$$
+
+- $y$ is the dependent variable (what we're trying to predict),
+- $x_1, x_2, \cdots$ are independent variables (features),
+- $\beta_0, \beta_1, \beta_2, \cdots$ are coefficients, and $\epsilon$ represents the error term.
+
+
+Objective: Minimize the differences between the observed values and the values predicted by the linear equation.
+
+:::
+:::
+
+## Relevant Metrics
+
+::: vvt
+
+$$\text{MSE} =\frac{1}{n} \sum_{i=1}^n\left(y_i-\hat{y}_i\right)^2$$
+
+
+$$\text{RMSE} =\sqrt{\frac{1}{n} \sum_{i=1}^n\left(y_i-\hat{y}_i\right)^2}$$
+
+$$R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \overline{y})^2}$$
+
+
+:::
+
+
+## Case study: Bike Share Scheme
+
+::: scroll-box-24
+
+Data from a real study on a bicycle sharing scheme was collected to predict rental numbers based on seasonality and weather conditions.
+
+::: hscroll
+
+```{r, echo=FALSE, results='asis'}
+url_data <- "https://raw.githubusercontent.com/MicrosoftDocs/ml-basics/master/data/daily-bike-share.csv"
+# Load the data into the R session
+bike <- read_csv(url_data) %>% drop_na() %>% 
+  select(-instant, -dteday) %>% 
+  mutate_at(vars(c("holiday", "mnth", "season", "weathersit", "weekday", "workingday", "yr")), as.factor)
+
+# View first few rows
+bike %>% 
+  slice_head(n = 5) %>% 
+  knitr::kable()
+```
+
+:::
+:::
+
+##
+
+::: font50
+
+| Variable        | Description |
+|--------------|-------------|
+| instant      | An identifier for each unique row |
+| season       | Encoded numerical value for the season (1 for spring, 2 for summer, 3 for fall, 4 for winter) |
+| yr           | Observation year in the study, spanning two years (0 for 2011, 1 for 2012) |
+| mnth         | Month of observation, numbered from 1 (January) to 12 (December) |
+| holiday      | Indicates if the observation was on a public holiday (binary value) |
+| weekday      | Day of the week of the observation (0 for Sunday to 6 for Saturday) |
+| workingday   | Indicates if the day was a working day (binary value, excluding weekends and holidays) |
+| weathersit   | Weather condition category (1 for clear, 2 for mist/cloud, 3 for light rain/snow, 4 for heavy rain/hail/snow/fog) |
+| temp         | Normalized temperature in Celsius |
+| atemp        | Normalized "feels-like" temperature in Celsius |
+| hum          | Normalized humidity level |
+| windspeed    | Normalized wind speed |
+| rentals      | Count of bicycle rentals recorded |
+
+:::
+
+##
+
+::: panel-tabset
+
+### Descriptive Statistics
+
+```{r, echo=FALSE}
+bike %>%
+  select(atemp, temp, hum, windspeed, rentals) %>%
+  map_df(~summary(.), .id = "variable") %>%
+  mutate(across(-variable, round, digits = 6)) %>% knitr::kable()
+```
+
+
+### Code
+
+
+```{r, eval=FALSE}
+bike %>%
+  select(atemp,temp, hum, windspeed, rentals) %>%
+  map_df(~summary(.), .id = "variable") %>%
+  mutate(across(-variable, round, digits = 6))
+```
+
+:::
+
+
+##
+
+```{r, echo=FALSE, out.width="80%", fig.width=7, fig.height=5, fig.align='center'}
+library(GGally)
+library(ggplot2)
+
+numeric_features <- bike %>% 
+  select(c(atemp, temp, hum, windspeed, rentals))
+
+
+# Custom function for upper panel (correlation coefficients)
+upper_panel <- function(data, mapping, ...) {
+  ggally_cor(data = data, mapping = mapping, ...)
+}
+
+# Custom function for lower panel (scatter plot with smooth line)
+lower_panel <- function(data, mapping, ...) {
+  ggally_smooth(data = data, mapping = mapping, ...)
+}
+
+# Custom function for diag panel (density plot)
+diag_panel <- function(data, mapping, ...) {
+  ggally_densityDiag(data = data, mapping = mapping, ...)
+}
+
+# Create the ggpairs plot
+ggpairs(numeric_features, 
+        upper = list(continuous = wrap(upper_panel, size = 4)), 
+        lower = list(continuous = wrap(lower_panel, size = 1, color = 'blue', alpha = 0.4)),
+        diag = list(continuous = wrap(diag_panel, size = 1, color = 'darkgreen')),
+        legends = FALSE) +
+  theme_light() +
+  theme(legend.position = "none") # Remove legends to clean up the plot
+
+```
+
+
+##
+
+```{r, echo=FALSE, out.width="80%", fig.width=7, fig.height=5, fig.align='center'}
+categorical_features <- bike %>% 
+  select(c(season, mnth, holiday, weekday, workingday, weathersit, rentals, yr))
+categorical_features <- categorical_features %>% 
+  pivot_longer(!rentals, names_to = "features", values_to = "values") %>%
+  group_by(features) %>% 
+  mutate(values = factor(values))
+
+# Plot a box plot for each feature
+categorical_features %>%
+  ggplot() +
+  geom_boxplot(aes(x = values, y = rentals, fill = features), alpha = 0.9, show.legend = F) +
+  facet_wrap(~ features, scales = 'free') +
+  paletteer::scale_fill_paletteer_d("RColorBrewer::Set3") +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(angle = 90))
+```
+
+
+## Data preparation and train-test split
+
+::: eqt
+
+```{r}
+set.seed(2056)
+bike_select <- bike %>% 
+  select(c(season, mnth, holiday, weekday, workingday, weathersit,
+           temp, atemp, hum, windspeed, rentals)) %>% 
+    mutate(across(1:6, factor))
+
+
+bike_split <- bike_select %>% 
+  initial_split(prop = 0.75, strata = holiday) 
+
+bike_train <- training(bike_split)
+bike_test <- testing(bike_split)
+```
+
+:::
+
+## 
+
+::: eqt
+
+Model specification
+
+```{r}
+lm_spec <- # your model specification
+  linear_reg() %>%  # model type
+  set_engine(engine = "lm") %>%  # model engine
+  set_mode("regression") # model mode
+```
+
+Fit the model
+
+```{r}
+# Train a linear regression model
+lm_mod <- lm_spec %>% 
+  fit(rentals ~ ., data = bike_train)
+```
+
+
+```{r}
+glance(lm_mod$fit) %>% knitr::kable()
+```
+
+:::
+
+
+## Predict on test data
+
+::: eqt
+::: font90
+
+```{r}
+results <- bike_test %>% 
+  bind_cols(lm_mod %>% 
+    predict(new_data = bike_test)) %>% 
+      select(c(rentals, .pred))
+```
+
+```{r}
+results %>% slice_head(n =6) 
+```
+
+:::
+:::
+
+## Evaluate the model
+
+::: eqt
+
+```{r}
+eval_metrics <- metric_set(rmse, rsq)
+
+# Evaluate RMSE, R2 based on the results
+eval_metrics(data = results,
+             truth = rentals,
+             estimate = .pred) %>% 
+  select(-2)
+```
+
+:::
+
+##
+
+
+```{r, echo=FALSE, out.width="80%", fig.width=7, fig.height=5, fig.align='center'}
+results %>%
+  ggplot(mapping = aes(x = rentals, y = .pred)) +
+  geom_point(size = 2, aes(color = "Predictions"), alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE, color = 'darkorange', linetype = "dashed", size = 1) +
+  scale_color_manual("", 
+                     values = "steelblue") +
+  labs(title = "Daily Bike Share Predictions",
+       subtitle = "Comparison of Actual vs. Predicted Rentals",
+       x = "Actual",
+       y = "Predicted",
+       caption = "Data source: Bike Share System") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(hjust = 0.5, size = 20, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5, size = 14),
+        plot.caption = element_text(size = 8, margin = margin(t = 10)),
+        legend.position = "none",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 12),
+        axis.title = element_text(face = "bold", size = 14),
+        axis.text = element_text(size = 12)) 
+```
+
+
+
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please finish the remaining problems in the class activity for today
+
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+

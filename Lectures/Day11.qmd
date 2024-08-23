@@ -1,0 +1,572 @@
+---
+title: "Basic String Manipulation"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+library(tidyverse)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(forcats)
+library(patchwork)
+library(DT)
+library(moderndive)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(lubridate)
+library(polite)
+library(rvest)
+library(stringr)
+library(gapminder)
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+
+kanye <- read_csv("~/Desktop/Insync/STAT220_Spring23/data/Kanye_cleaned.csv")
+
+url <- "https://en.wikipedia.org/w/index.php?title=Gun_violence_in_the_United_States_by_state&direction=prev&oldid=810166167"
+murders <- read_html(url) %>% 
+  html_nodes("table") %>% 
+  html_table() %>%
+  .[[1]] %>%
+  setNames(c("state", "population", "total", "murder_rate"))
+```
+
+
+## Let's Define Strings
+
+::: eqt
+::: font80
+
+- A [string]{.yellow-h} is any sequence of characters
+- Define a string by surrounding text with either single quotes or double quotes.
+
+
+```{r}
+s <- "Hello!"    # double quotes define a string
+s <- 'Hello!'    # single quotes define a string  
+```
+  
+
+The `cat()` or `writeLines()` function displays a string as it is represented inside R.
+
+::: row
+::: left
+```{r}
+cat(s)
+```
+:::
+::: right
+```{r}
+writeLines(s)
+```
+:::
+
+```{r, eval=FALSE, echo=TRUE}
+s <- `Hello`    # backquotes do not define a string
+s <- "10""    # error - unclosed quotes
+```
+
+:::
+:::
+:::
+
+## String Parsing
+
+::: cle
+::: font80
+
+[Definition]{.bold-text}: pulling apart some text or `string` to do something with it
+
+<!-- manipulate (or parse) textual data by looking for patterns in a string -->
+
+The most common tasks in string processing include:
+
+  + [extracting]{.green-h} numbers from strings, e.g. ["12%"]{.bold-blue}
+  + [removing]{.green-h} unwanted characters from text, e.g. ["New Jersey_* "]{.bold-blue}
+  + [finding and replacing]{.green-h} characters, e.g. ["2,150"]{.bold-blue}
+  + [extracting]{.green-h} specific parts of strings, e.g. ["Learning #datascience is fun!"]{.bold-blue}
+  + [splitting]{.green-h} strings into multiple values, e.g. ["123 Main St, Springfield, MA, 01101"]{.bold-blue}
+
+:::
+:::
+
+
+::: middle-align-xy
+
+## Regular expressions: Regex
+
+::: eqt
+
+Regular expressions are a language for expressing patterns in strings
+
+- Regex can include special characters unlike a regular string 
+- To use regex in R, you need to use the **stringr** package
+
+:::
+:::
+
+
+## `stringr` package
+
+
+::: row
+::: left
+
+<br>
+
+:::  bq
+
+  + detecting, locating, extracting and replacing elements of strings.
+  + begin with `str_` and take the string as the first argument
+:::  
+:::
+
+::: right
+
+<img src="images/stringr.png" width="80%" height="40%"> <br>
+
+:::
+:::
+
+
+[`stringr` [cheatsheet](https://rstudio.github.io/cheatsheets/strings.pdf)]{.footer}
+
+
+## Special characters
+
+::: cle
+::: row
+::: left
+::: font80  
+The "escape" backslash \\ is used to escape the special use of certain characters 
+
+```{r collapse=TRUE, comment="#"}
+writeLines("\"")
+writeLines("\\")
+writeLines("Math\\Stats")
+```
+
+:::
+:::
+
+::: right
+
+::: font80
+To include both single and double quotes in string, escape with \\
+
+<br>
+  
+```{r collapse=TRUE, comment="#"}
+s <- '5\'10"'    # outer single quote
+writeLines(s)
+```
+
+
+```{r collapse=TRUE, comment="#"}
+s <- "5'10\""    # outer double quote
+writeLines(s)
+```
+
+:::
+:::
+:::
+:::
+
+
+::: middle-align-xy
+
+##  Combining strings
+
+::: {.cle .font90 .row}
+
+::: left
+
+```{r}
+str_c("iron", "wine")
+str_flatten(c("iron", "wine"), 
+            collapse = " and ")
+```
+
+:::
+
+::: right
+
+```{r}
+a <- c("a", "b", "c")
+b <- c("A", "B", "C")
+str_c(a, b) 
+```
+
+:::
+
+:::
+:::
+
+##  Combining strings
+
+::: cle
+
+```{r}
+building <- "CMC"
+room <- "102"
+begin_time <- "11:10 a.m."
+end_time <- "12:40 p.m."
+days <- "MWF"
+class <- "STAT 220"
+```
+
+
+```{r}
+str_c(class, "meets from", 
+      begin_time, "to", end_time, 
+      days, "in", building, room, sep = " ")
+```
+
+:::
+
+## `str_length()`
+
+
+> tells you how many characters are in each entry of a character vector
+
+::: cle
+
+```{r}
+gss_cat %>% names()
+```
+
+
+```{r}
+# length of each column names 
+gss_cat %>% names() %>% str_length()
+```
+
+:::
+
+## `str_count()`
+
+> counts the number of non-overlapping matches of a pattern in each entry of a character vector
+
+::: cle
+
+```{r}
+gss_cat %>% names()
+```
+
+
+```{r}
+# count number of vowels in each column name
+vowels_pattern <- "[aeiouAEIOU]"
+gss_cat %>% names() %>% str_count(vowels_pattern)
+```
+
+:::
+
+## `str_glue()`
+
+> allows one to interpolate strings and values that have been assigned to names in R
+
+::: cle
+
+```{r}
+y <- lubridate::now() # current date
+str_glue("today is {y}.")
+```
+
+```{r}
+name <- c("Alex", "Mia")
+dob <- c(lubridate::ymd("1992/12/24"), lubridate::ymd("1994/02/14"))
+str_glue("Hi, my name is {name} and I was born in {dob}.")
+```
+
+:::
+
+
+
+## `str_sub()`
+
+> Extract and replace substrings from a character vector
+
+::: {.cle .font80}
+
+```{r}
+phrase <- "cellar door"
+str_sub(phrase, start = 1, end = 6)
+```
+
+
+```{r}
+str_sub(phrase, start = c(1,8), end = c(6,11))
+```
+
+
+```{r}
+str_sub(phrase, start = c(1,8), end = c(6,11)) %>% 
+  str_flatten(collapse = " ")
+```
+
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca11-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please complete problem 1 in today's class activity.
+:::
+:::
+:::
+
+`r countdown(minutes = 15, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+
+## More Special Characters
+
+::: eqt
+::: font80
+
+- The [|]{.yellow-h} symbol inside a regex means `"or"`
+- The [[abe]]{.yellow-h} means one of a,b, or e
+- Use [`\\n`]{.yellow-h} to match a newline character
+- Use [`\\s`]{.yellow-h} to match white space characters (spaces, tabs, and newlines)
+- Use [`\\w`]{.yellow-h} to match alphanumeric characters (letters and numbers)
+    * can also use [`[:alnum:]`]{.yellow-h} 
+- Use [`\\d`]{.yellow-h} to represent digits (numbers)
+    * can also use [`[:digit:]`]{.yellow-h}
+
+:::
+:::
+
+[Click [here](https://www.jetbrains.com/help/objc/regular-expression-syntax-reference.html#regex-syntax-reference) for extensive lists]{.footer}
+
+
+
+
+##
+
+<center>
+<div style="text-align: center;">
+  <img src="images/stringr_character.png" style="width: 70%;">
+</div>
+
+</center>
+
+
+[`stringr` [cheatsheet](https://rstudio.github.io/cheatsheets/strings.pdf)]{.footer}
+
+
+::: middle-align-xy
+
+## More Special Characters
+
+::: eqt
+
+- [`^`]{.yellow-h} = start of a string
+- [`$`]{.yellow-h} = end of a string
+- [`.`]{.yellow-h} = any character
+
+:::
+:::
+
+::: middle-align-xy
+
+## Quantifiers
+
+::: eqt
+
+- [`*`]{.yellow-h} = matches the preceding character any number of times
+- [`+`]{.yellow-h} = matches the preceding character once
+- [`?`]{.yellow-h} = matches the preceding character at most once (i.e. optionally)
+- [{n}]{.yellow-h} = matches the preceding character exactly n times
+
+:::
+
+
+[Try more regexes [here](https://regexr.com/)]{.footer}
+
+:::
+
+## Finding strings
+
+::: cle 
+::: font80
+
+```{r}
+days <- c("Monday", "Tuesday", "Wednesday", 
+              "Thursday", "Friday", "Saturday", "Sunday")
+```
+
+
+```{r}
+str_detect(days, "^[Ss]un.*") # returns a logical vector
+```
+
+
+
+```{r}
+days %>% 
+  str_which("^T")  # indices of matching entries  
+```
+
+
+```{r}
+days %>%
+  str_locate("day") # start and end indices of matching pattern in a matrix/array
+```
+
+
+:::
+:::
+
+## `str_extract()` 
+
+> Extract just the part of the string matching the specified regex instead of the entire entry
+
+::: cle
+
+```{r}
+name_phone <- c("Moly: 250-999-8878", 
+       "Ali: 416-908-2044", 
+       "Eli: 204-192-9829", 
+       "May: 250-209-7047")
+str_extract(name_phone,  "\\w+") 
+```
+:::
+
+<details>
+<summary class="answer">Click for Hint</summary>
+Extracts the first word from each string in the given vector
+</details>
+
+
+
+## `str_split()`
+
+> splits a string into a list or matrix of pieces based on a supplied pattern
+
+::: cle
+
+```{r}
+str_split(c("a_3", "d_4"), pattern = "_") # returns a list
+```
+
+
+```{r}
+str_split(c("a_3", "d_4"), pattern = "_", 
+          simplify = TRUE) # returns a matrix
+```
+
+:::
+
+## `str_replace()`
+
+> Replaces the first instance of the detected pattern with a specified string.
+
+::: cle
+
+```{r}
+gss_cat %>% 
+  names() %>% 
+  str_replace(pattern = "^.{3}", # any 1st 3 characters 
+              replacement = "X_")
+```
+
+:::
+
+## **str_replace_all()** {auto-animate="true"}
+
+::: scroll-box-20
+```{r demo1, fig.width = 3, fig.height = 3.5, out.width = "100%"}
+murders
+```
+:::
+
+
+## **str_replace_all()**{auto-animate=true}
+
+::: scroll-box-20
+```{r demo2, fig.width = 3, fig.height = 3.5, out.width = "100%"}
+murders %>% 
+  mutate(population = str_replace_all(population, ",", ""),
+         total = str_replace_all(total, ",", "")) 
+```
+:::
+
+
+## **str_replace_all()**{auto-animate=true}
+
+::: scroll-box-20
+```{r demo3, fig.width = 3, fig.height = 3.5, out.width = "100%"}
+murders %>% 
+  mutate(population = str_replace_all(population, ",", ""),
+         total = str_replace_all(total, ",", "")) %>% 
+  mutate_at(vars(2:3), as.double) 
+```
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please do the remaining problems in the class activity.
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 15, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

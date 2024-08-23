@@ -1,0 +1,626 @@
+---
+title: "Data wrangling with **dplyr**"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+
+
+# load necessary packages
+library(tidyverse)
+library(dplyr)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(forcats)
+library(patchwork)
+library(DT)
+library(knitr)
+library(maps)
+library(polite)
+library(rvest)
+
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+
+
+# data
+
+polluted_cities <- tribble(
+       ~city,   ~size, ~amount, 
+  "New York", "large",      23,
+  "New York", "small",      14,
+    "London", "large",      22,
+    "London", "small",      16,
+   "Beijing", "large",      121,
+   "Beijing", "small",      56
+)
+
+
+```
+
+
+## Boolean operators
+
+For help, `?base::Logic`
+
+```{r echo=FALSE, out.width = "80%", fig.align='center'}
+knitr::include_graphics("images/07-transform-logical.png")
+```
+
+[Source: *R for Data Science*, by Grolemund & Wickham]{.footer}
+
+
+## `rename()` 
+
+```{r}
+polluted_cities <- tibble(
+  city = c("New York", "London", "Doha",
+           "Hongkong", "Beijing"),
+  size = c("large", "large", "small",
+           "small", "large"),
+  amount = c(23.4, 22.2, 12.4, 
+             15.6, 121.0)
+)
+
+polluted_cities %>% 
+  rename(pollution = amount)
+```
+
+
+
+## Mutating multiple columns at once: `mutate_*`
+
+<br>
+
+::: bq
+::: font60
+
+- variants of `mutate()` that are useful for mutating multiple columns at once
+  + `mutate_at()`, `mutate_if()`, `mutate_all()`, etc.
+- which columns get mutated depends on a predicate, can be:
+  + a function that returns TRUE/FALSE like `is.numeric()`
+  + variable names through `vars()`
+
+:::
+:::
+
+## Mutating multiple columns at once: `mutate_*`
+
+
+
+
+```{r}
+polluted_cities %>% 
+  mutate_at(vars(city:amount), toupper)
+```
+
+## Mutating multiple columns at once: `mutate_*`
+
+
+```{r}
+polluted_cities %>% 
+  mutate_if(is.double, round, digits = 0)
+```
+
+
+::: middle-align-xy
+
+## Selecting & renaming multiple columns
+
+::: bbb
+
+- `select_*()` & `rename_*()` are variants of `select()` and `rename()`
+- use like `mutate_*()` options on previous slide
+:::
+:::
+
+
+
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+::: lqt
+
+- Please clone the `ca7-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problem 1 in the class activity for today
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+## Join types
+
+<br>
+
+<center>
+<img src="images/join_types.png" width="90%" height="70%"> <br>
+</center>
+
+
+
+
+
+## Two-table verbs
+
+<br>
+
+::: bql
+::: font80
+
+- `inner_join()` - Merge two datasets. Exclude all unmatched rows.
+
+- `full_join()` - Merge two datasets. Keep all observations.
+
+- `left_join()` - Merge two datasets. Keep all observations from the origin table.
+
+- `right_join()` - Merge two datasets. Keep all observations from the destination table.
+
+- `anti_join()` - Drops all observations in origin that have a match in destination table.
+:::
+:::
+
+
+
+## Mutating Joins
+
+<br>
+
+Differ in their behavior when a match is not found
+
+::: bql
+::: font80
+
+- `left_join()`
+    
+- `right_join()`
+    
+- `inner_join()`
+    
+- `full_join()`
+
+:::
+:::
+
+
+
+
+## *left_join()*
+
+::: font90
+
+```{r}
+df1 <- tibble(x = c(1, 2), y = 2:1)
+df2 <- tibble(x = c(3, 1), a = c(10,100), b = c("a", "r"))
+```
+
+::: row
+::: left
+
+```{r, echo=FALSE}
+df1 %>% knitr::kable(type = "html", caption = "df1")
+```
+
+:::
+
+::: right
+
+```{r, echo=FALSE}
+df2 %>% knitr::kable(type = "html", caption = "df2")
+```
+
+:::
+:::
+
+
+```{r, eval=FALSE}
+df1 %>% left_join(df2)
+```
+
+
+```{r, echo=FALSE}
+df1 %>% left_join(df2) %>% 
+  knitr::kable(type = "html")
+```
+
+
+:::
+
+  
+## *right_join()*
+
+::: font90
+
+```{r}
+df1 <- tibble(x = c(1, 2), y = 2:1)
+df2 <- tibble(x = c(3, 1), a = c(10,100), b = c("a", "r"))
+```
+
+
+::: row
+::: left
+
+```{r, echo=FALSE}
+df1 %>% knitr::kable(type = "html", caption = "df1")
+```
+
+:::
+
+::: right
+
+```{r, echo=FALSE}
+df2 %>% knitr::kable(type = "html", caption = "df2")
+```
+
+:::
+:::
+
+
+```{r, eval=FALSE}
+df1 %>% right_join(df2)
+```
+
+
+```{r, echo=FALSE}
+df1 %>% right_join(df2) %>% 
+  knitr::kable(type = "html")
+```
+
+:::
+
+
+## *inner_join()*
+
+```{r}
+df1 <- tibble(x = c(1, 2), y = 2:1)
+df2 <- tibble(x = c(3, 1), a = c(10,100), b = c("a", "r"))
+```
+
+
+::: row
+::: left
+
+```{r, echo=FALSE}
+df1 %>% knitr::kable(caption = "df1")
+```
+
+:::
+
+::: right
+
+```{r, echo=FALSE}
+df2 %>% knitr::kable(caption = "df2")
+```
+
+:::
+:::
+
+
+```{r, eval=FALSE}
+df1 %>% inner_join(df2)
+```
+
+```{r, echo=FALSE}
+df1 %>% inner_join(df2) %>% knitr::kable()
+```
+
+
+
+
+
+
+## Flights data
+
+```{r}
+library(nycflights13)
+flights2 <- flights %>% 
+  select(year:day, hour, origin, dest, tailnum, carrier)
+```
+
+<br>
+
+```{r}
+head(flights2)
+```
+
+
+
+
+
+## Airline information
+
+```{r}
+head(airlines)
+```
+
+
+
+
+## *left_join()*
+
+```{r}
+flights2 %>% 
+  left_join(airlines)
+```
+
+
+
+
+
+## Planes information
+
+```{r}
+head(planes)
+```
+
+
+
+
+
+
+## Keys: controlling how the tables are matched
+
+```{r}
+flights2 %>% left_join(planes, by = "tailnum")
+```
+
+
+
+
+
+## Airport information
+
+```{r}
+head(airports)
+```
+
+
+## Matching keys
+
+
+```{r}
+flights2 %>% left_join(airports, by = c("origin" = "faa"))
+```
+
+
+
+
+
+
+  
+## Filtering joins
+
+Most useful for diagnosing join mismatches
+
+::: eqt
+
+Filtering joins return a copy of the dataset that has been filtered, not augmented (as with mutating joins)
+
+- `semi_join(x,y)` :  keeps all observations in x that have a match in y.
+- `anti_join(x,y)` :  drops all observations in x that have a match in y.
+
+
+:::
+
+
+
+
+
+## Another example: *semi_join()*
+
+
+
+```{r, echo=FALSE}
+df1 <- tibble(x = c(1, 1, 3, 4), y = 1:4)
+df2 <- tibble(x = c(1, 1, 2), z = c("a", "b", "a"))
+```
+
+::: font70
+::: row
+::: left
+
+```{r, echo=FALSE}
+df1 %>% knitr::kable(type = "html", caption = "df1")
+```
+
+:::
+
+
+::: right
+
+
+```{r, echo=FALSE}
+df2 %>% knitr::kable(type = "html", caption = "df2")
+```
+
+:::
+:::
+:::
+
+
+```{r, eval=FALSE}
+df1 %>% semi_join(df2, by = "x")
+```
+
+```{r, echo=FALSE}
+df1 %>% semi_join(df2, by = "x") %>% knitr::kable(type = "html")
+```
+
+
+
+
+
+
+## Another example: *anti_join()*
+
+::: font70
+::: row
+::: left
+
+```{r, echo=FALSE}
+df1 %>% knitr::kable(type = "html", caption = "df1")
+```
+
+:::
+
+::: right
+
+```{r, echo=FALSE}
+df2 %>% knitr::kable(type = "html", caption = "df2")
+```
+
+:::
+:::
+:::
+
+```{r, eval=FALSE}
+df1 %>% anti_join(df2, by = "x")
+```
+
+```{r, echo=FALSE}
+df1 %>% anti_join(df2, by = "x") %>% knitr::kable(type = "html")
+```
+
+
+
+
+## Set Operations
+
+These expect the x and y inputs to have the same variables, and treat the observations like sets:
+
+::: cle
+::: font70
+- `intersect(x,y)`
+  - will return only the rows that appear in both datasets
+- `union(x,y)` 
+  - return every row that appears in one or more of the datasets
+  - If a row appears multiple times union will only return it once
+- `setdiff(x,y)`
+  - will return the rows that appear in the first dataset but not the second
+  
+:::
+:::
+
+
+## Set operations
+
+```{r, echo=FALSE}
+df1 <- tibble(x = 1:2, y = c(1,1))
+df2 <- tibble(x = 1:2, y = 1:2)
+```
+
+
+::: row
+::: left
+
+```{r, echo=FALSE}
+df1 %>% knitr::kable(type = "html", caption = "df1")
+```
+
+
+```{r, echo=FALSE}
+df2 %>% knitr::kable(type = "html", caption = "df2")
+```
+
+:::
+
+::: right
+::: font80
+
+```{r, eval=FALSE}
+intersect(df1, df2)
+```
+
+```{r, echo=FALSE}
+intersect(df1, df2) %>% knitr::kable(type = "html")
+```
+
+
+```{r, eval=FALSE}
+setdiff(df1, df2)
+```
+
+```{r, echo=FALSE}
+setdiff(df1, df2) %>% knitr::kable(type = "html")
+```
+
+
+```{r, eval=FALSE}
+union(df1, df2)
+```
+
+```{r, echo=FALSE}
+union(df1, df2) %>% knitr::kable(type = "html")
+```
+
+:::
+:::
+:::
+
+
+
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please do the remaining problems in the class activity.
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

@@ -1,0 +1,38 @@
+// _typography.scss
+$font-family-default: 'Ubuntu Mono', Sans-Serif;
+$font-family-heading: 'Josefin Sans', Sans-Serif;
+$font-family-code: 'Source Code Pro', 'Lucida Console', Monaco, monospace;
+$font-size-base: 1em;
+$font-size-large: 1.2em;
+$font-size-h1: 20px;
+$font-size-h2: 15px;
+$font-size-h3: 10px;
+
+.font90 {
+  font-size: 90%;
+}
+
+.font80 {
+  font-size: 80%;
+}
+
+.font70 {
+  font-size: 70%;
+}
+
+.font60 {
+  font-size: 60%;
+}
+
+.font50 {
+  font-size: 50%;
+}
+
+
+.font110 {
+  font-size: 110%;
+}
+
+.font120 {
+  font-size: 120%;
+}

@@ -1,0 +1,36 @@
+// _fonts.scss
+@import url('https://fonts.googleapis.com/css?family=Ubuntu+Mono:700,900');
+
+@font-face {
+  font-family: 'Josefin Sans';
+  font-style: normal;
+  font-weight: 900;
+  src: url('../fonts/josefin-sans-v23-latin-bold.eot');
+  src: local(''),
+       url('../fonts/josefin-sans-v23-latin-bold.eot?#iefix') format('embedded-opentype'),
+       url('../fonts/josefin-sans-v23-latin-bold.woff2') format('woff2'),
+       url('../fonts/josefin-sans-v23-latin-bold.woff') format('woff'),
+       url('../fonts/josefin-sans-v23-latin-bold.ttf') format('truetype'),
+       url('../fonts/josefin-sans-v23-latin-bold.svg#JosefinSans') format('svg');
+}
+
+.bold-red {
+  font-weight: bold;
+  color: red;
+}
+
+.bold-blue {
+  font-weight: bold;
+  color: blue;
+}
+
+.bold-green {
+  font-weight: bold;
+  color: green;
+}
+
+
+.bold-text {
+  font-weight: bold;
+  color: maroon;
+}

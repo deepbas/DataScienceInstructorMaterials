@@ -1,0 +1,537 @@
+---
+title: "Factor manipulations"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+
+# load necessary packages
+library(tidyverse)
+library(countdown)
+library(ggthemes)
+library(forcats)
+library(patchwork)
+library(knitr)
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+
+desserts <- read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/desserts.csv")
+
+energy <- readr::read_csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/energy.csv",
+                    col_type = cols(
+                     .default = col_double(), 
+                      Timestamp = col_datetime(format = ""),
+                      dayWeek = col_factor(levels=c("Mon","Tues","Wed","Thurs","Fri","Sat","Sun"))
+                     ))
+
+energy_narrow <- energy %>%
+  pivot_longer(
+    cols = `100_Nevada_Street`:Wilson_House, 
+    names_to = "building",
+    values_to = "energyKWH"
+  )
+
+```
+
+
+## Factors - categorical data
+
+
+<center><img src="images/forcats_cheatsheet.png" width="60%" height="60%"></center>
+
+
+
+[See [`forcats` cheatsheet](https://rstudio.github.io/cheatsheets/factors.pdf)
+and [`forcats` vignette](https://forcats.tidyverse.org/)]{.footer}
+
+
+##  Example - specify levels `fct_relevel()`
+
+::: eqt
+::: font70
+::: row
+::: left
+
+```{r}
+mydata <- tibble(
+  id = 1:4, 
+  grade=c("9th","10th","11th","9th")) %>%
+  mutate(grade_fac = factor(grade)) 
+levels(mydata$grade_fac)
+```
+
+
+```{r}
+mydata %>% 
+  arrange(grade_fac)
+```
+
+:::
+
+::: right
+
+```{r}
+mydata <- mydata %>% 
+  mutate(
+    grade_fac = 
+      fct_relevel(grade_fac, 
+                  c("9th","10th","11th"))) 
+levels(mydata$grade_fac)
+```
+
+
+```{r}
+mydata %>% arrange(grade_fac)
+```
+
+:::
+:::
+:::
+:::
+
+
+## [Example - collapse levels `fct_collapse()` and `fct_lump()`]{.font60}
+
+::: bql
+
+```{r}
+mydata <- tibble(loc = c("SW","NW","NW","NE","SE","SE"))
+mydata %>% mutate(
+  loc_fac = factor(loc),
+  loc2 = fct_collapse(loc_fac,  # collapse levels                        
+                      south = c("SW","SE"), 
+                      north = c("NE","NW")), 
+  loc3 = fct_lump(loc_fac, 
+                  n=2,
+                  other_level = "other") # most common 2 levels + other
+  )
+```
+
+:::
+
+
+
+## Order factor levels: `fct_infreq()`
+
+::: eqt
+::: font90
+`fct_infreq()` : This function orders factor levels by their frequency in the data.
+
+```{r}
+# Order factor levels by their frequency
+mydata <- tibble(
+  id = 1:8, 
+  grade = c("9th", "10th", "11th", "9th", "10th", "11th", "9th", "9th")) %>%
+  mutate(grade_fac = factor(grade))
+
+mydata <- mydata %>%
+  mutate(grade_fac = fct_infreq(grade_fac)) 
+
+levels(mydata$grade_fac)
+```
+
+:::
+:::
+
+## `fct_rev()` : Reverse the order of factor levels
+
+::: eqt
+::: font80
+
+```{r}
+# Reverse the order of factor levels
+mydata <- tibble(
+  id = 1:4, 
+  grade = c("9th", "10th", "11th", "9th")) %>%
+  mutate(grade_fac = factor(grade))
+
+mydata <- mydata %>%
+  mutate(grade_fac = fct_rev(grade_fac)) 
+
+levels(mydata$grade_fac)
+```
+
+:::
+:::
+
+## `fct_anon()`
+
+::: eqt
+::: font80
+
+`fct_anon()`: Anonymize factor levels by replacing them with unique, randomly generated character strings.
+
+```{r}
+# Anonymize factor levels
+mydata <- tibble(
+  id = 1:4, 
+  grade = c("9th", "10th", "11th", "9th")) %>%
+  mutate(grade_fac = factor(grade))
+
+mydata <- mydata %>%
+  mutate(grade_fac = fct_anon(grade_fac)) 
+
+levels(mydata$grade_fac)
+```
+
+:::
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca10-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+## `gss_cat`
+
+::: eqt
+
+A sample of data from the General Social Survey, a long-running US survey conducted by NORC at the University of Chicago.
+
+
+```{r echo=FALSE}
+gss_cat
+```
+
+:::
+
+## Which religions watch the least TV?
+
+```{r gss-religion-tv,  out.width = "100%", fig.align='center'}
+gss_cat %>%
+  tidyr::drop_na(tvhours) %>%
+  group_by(relig) %>%
+  summarize(tvhours = mean(tvhours)) %>%
+  ggplot(aes(tvhours, relig)) +
+    geom_point()
+```
+
+
+
+
+## Which one do you prefer?
+
+
+```{r gss-religion-oredering, fig.width = 8, fig.height = 3.5, out.width = "100%", echo=FALSE}
+p1 <- gss_cat %>%
+  drop_na(tvhours) %>%
+  group_by(relig) %>%
+  summarize(tvhours = mean(tvhours)) %>%
+  ggplot(aes(tvhours, relig)) +
+    geom_point()
+
+p2 <- gss_cat %>%
+  drop_na(tvhours) %>%
+  group_by(relig) %>%
+  summarize(tvhours = mean(tvhours)) %>%
+  ggplot(aes(tvhours, fct_reorder(relig, tvhours))) +
+    geom_point() +
+  labs(y = "relig")
+
+p1 + p2
+```
+
+
+## Why is the y-axis in this order?
+
+```{r fig.height = 3.25, fig.width = 4, fig.align='center', out.width = "62%", echo=FALSE}
+p1
+```
+
+
+::: middle-align-xy
+
+## Levels of a factor
+
+::: scroll-box-20
+```{r levels, fig.width = 3, fig.height = 3.5, out.width = "100%"}
+gss_cat %>% 
+  pull(relig) %>% 
+  levels() 
+```
+
+:::
+:::
+
+::: middle-align-xy
+
+## Most useful factor skills
+
+::: bql
+
+1. **Reorder** the levels
+
+2. **Recode** the levels
+
+3. **Collapse** levels
+
+4. **Lump** levels
+
+:::
+:::
+
+## Reorder relig by tvhours
+
+```{r reorder-tv-relig, fig.align='center'}
+gss_cat %>%
+  drop_na(tvhours) %>%
+  group_by(relig) %>%
+  summarize(tvhours = mean(tvhours)) %>%
+  ggplot(aes(x = tvhours, 
+             y = relig)) +
+    geom_point()
+```
+
+
+## Reorder relig by tvhours
+
+```{r reorder-tv-relig1, fig.align='center'}
+gss_cat %>%
+  drop_na(tvhours) %>%
+  group_by(relig) %>%
+  summarize(tvhours = mean(tvhours)) %>%
+  ggplot(aes(x = tvhours, 
+             y = fct_reorder(relig, tvhours))) +
+    geom_point()
+```
+
+
+## Which political leaning watches more TV?
+
+
+```{r echo=FALSE, fig.height = 3, fig.width = 4, out.width = "50%", fig.align='center'}
+gss_cat %>%
+   drop_na(tvhours) %>%
+   group_by(partyid) %>%
+   summarize(tvhours = mean(tvhours)) %>%
+   ggplot(aes(tvhours, fct_reorder(partyid, tvhours))) +
+     geom_point() +
+     labs(y = "partyid")
+```
+
+
+
+How could we improve the `partyid` labels?
+
+##  `fct_recode()`
+
+::: panel-tabset
+
+### Plot
+
+```{r fct-recode-partyid, fig.align='center', echo=FALSE}
+gss_cat %>%
+  drop_na(tvhours) %>%
+  select(partyid, tvhours) %>%
+    mutate(partyid = fct_recode(partyid,
+    "Republican, strong"    = "Strong republican",
+    "Republican, weak"      = "Not str republican",
+    "Independent, near rep" = "Ind,near rep",
+    "Independent, near dem" = "Ind,near dem",
+    "Democrat, weak"        = "Not str democrat",
+    "Democrat, strong"      = "Strong democrat")) %>% 
+  group_by(partyid) %>%
+  summarize(tvhours = mean(tvhours)) %>%
+  ggplot(aes(tvhours, fct_reorder(partyid, tvhours))) +
+  geom_point() + 
+  labs(y = "partyid")
+```
+
+### Code
+
+```{r fct-recode-partyid1, eval=FALSE}
+gss_cat %>%
+  drop_na(tvhours) %>%
+  select(partyid, tvhours) %>%
+    mutate(partyid = fct_recode(partyid,
+    "Republican, strong"    = "Strong republican",
+    "Republican, weak"      = "Not str republican",
+    "Independent, near rep" = "Ind,near rep",
+    "Independent, near dem" = "Ind,near dem",
+    "Democrat, weak"        = "Not str democrat",
+    "Democrat, strong"      = "Strong democrat")) %>% 
+  group_by(partyid) %>%
+  summarize(tvhours = mean(tvhours)) %>%
+  ggplot(aes(tvhours, fct_reorder(partyid, tvhours))) +
+  geom_point() + 
+  labs(y = "partyid")
+```
+
+
+:::
+
+## `fct_collapse()`
+
+::: panel-tabset
+
+### Plot
+
+```{r fct-collapse-partyid, echo=FALSE}
+gss_cat %>%
+  drop_na(tvhours) %>%
+  select(partyid, tvhours) %>%
+  mutate(
+    partyid = 
+      fct_collapse(
+        partyid,
+        conservative = c("Strong republican", 
+                         "Not str republican", 
+                         "Ind,near rep"),
+        liberal = c("Strong democrat", 
+                    "Not str democrat", 
+                    "Ind,near dem"))
+  ) %>% 
+  group_by(partyid) %>%
+  summarize(tvhours = mean(tvhours)) %>%
+  ggplot(aes(tvhours, fct_reorder(partyid, tvhours))) +
+  geom_point() + 
+  labs(y = "partyid")
+```
+
+
+### Code
+
+```{r fct-collapse-partyid1, eval=FALSE}
+gss_cat %>%
+  drop_na(tvhours) %>%
+  select(partyid, tvhours) %>%
+  mutate(
+    partyid = 
+      fct_collapse(
+        partyid,
+        conservative = c("Strong republican", 
+                         "Not str republican", 
+                         "Ind,near rep"),
+        liberal = c("Strong democrat", 
+                    "Not str democrat", 
+                    "Ind,near dem"))
+  ) %>% 
+  group_by(partyid) %>%
+  summarize(tvhours = mean(tvhours)) %>%
+  ggplot(aes(tvhours, fct_reorder(partyid, tvhours))) +
+  geom_point() + 
+  labs(y = "partyid")
+```
+
+
+:::
+
+
+##  `fct_lump()`
+
+::: panel-tabset
+
+### Code
+
+```{r fct-lump-partyid,  echo=FALSE}
+gss_cat %>%
+  mutate(partyid = partyid) %>% 
+  mutate(partyid = fct_lump(partyid, n = 5, other_level = "Others")) %>% 
+  ggplot(aes(x = fct_infreq(partyid))) + 
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 20, 
+                                  vjust = 1,
+                                  hjust=1)) +
+  labs(x = "partyid")
+```
+
+
+### Plot
+
+```{r fct-lump-partyid1,  eval=FALSE}
+gss_cat %>%
+  mutate(partyid = partyid) %>% 
+  mutate(partyid = fct_lump(partyid, n = 5, other_level = "Others")) %>% 
+  ggplot(aes(x = fct_infreq(partyid))) + 
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 20, 
+                                  vjust = 1,
+                                  hjust=1)) +
+  labs(x = "partyid")
+```
+
+:::
+
+# Summary
+
+::: cle
+::: font90
+To enhance your data analysis, you can use the following factor manipulation techniques:
+
+- Reorder the levels to arrange them in a meaningful order.
+- Recode the levels to modify the labels or merge similar categories.
+- Collapse levels to group multiple categories into one.
+- Lump levels to reduce the number of categories by combining less frequent ones.
+
+:::
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please do the remaining problems in the class activity.
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

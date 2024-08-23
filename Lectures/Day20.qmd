@@ -1,0 +1,330 @@
+---
+title: "Interactive Graphs and Shiny Integration"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+filters:
+  - shinylive
+  - webr
+---
+
+
+```{r setup, include=FALSE}
+# load necessary packages
+library(tidyverse)
+library(ggplot2)
+library(countdown)
+library(ggthemes)
+library(htmlwidgets)
+library(lubridate)
+library(fontawesome)
+library(rvest)
+library(forcats)
+library(polite)
+library(DT)
+library(purrr)
+library(leaflet)
+library(maps)     
+library(sp)   
+library(sf)
+
+options(tigris_class = "sf")
+options(tigris_use_cache = TRUE)
+
+select <- dplyr::select
+
+# Set ggplot theme
+theme_set(theme_tufte(base_size = 10))
+
+yt <- 0
+
+table_usafacts <- bow(url = "https://usafacts.org/visualizations/coronavirus-covid-19-spread-map/state/minnesota") %>%
+  scrape() %>% 
+  html_elements(css = "table") %>% 
+  html_table()
+
+covidMN <- table_usafacts[[2]]
+
+# tidy it up
+covidMN_final <- covidMN %>% janitor::clean_names() %>%
+  mutate(cases = as.numeric(str_remove(cases, ","))) %>%
+  mutate(county = str_remove(county, " County"))
+
+```
+
+
+## Spatial Data Analysis in R
+
+::: zen
+::: font70
+
+ `sf` (Simple Features) 
+ 
+- **Comprehensive Integration**: Seamlessly handles spatial data within the `tidyverse` ecosystem, supporting complex spatial operations and integration with `ggplot2` for advanced visualizations.
+
+ `tigris`
+ 
+- **U.S. Geographic Detail**: Directly accesses detailed U.S. Census Bureau shapefiles as `sf` objects, ideal for socio-economic and demographic studies.
+
+ `rnaturalearth`
+ 
+- **Global Data Accessibility**: Provides extensive global vector data from Natural Earth, ready for use with mapping tools like `leaflet` and `ggplot2` for both interactive and static map creation.
+
+:::
+:::
+
+##
+
+::: sub
+
+```{r warning=FALSE}
+library(sf)
+library(tigris)
+library(ggplot2)
+
+ggplot(states()) +
+  geom_sf(aes(fill = ALAND)) +
+  coord_sf(xlim = c(-125, -66), ylim = c(25, 49), expand = FALSE) +
+  labs(title = "US States by Land Area", fill = "Land Area") 
+```
+
+:::
+
+
+##
+
+::: sub
+
+```{r}
+library(rnaturalearth)
+library(sf)
+library(ggplot2)
+china_provinces <- ne_states(country = "China", returnclass = "sf")
+ggplot(china_provinces) +
+  geom_sf(fill = "lightblue", color = "black") +
+  coord_sf(expand = FALSE) +
+  labs(title = "Provinces of China") 
+```
+
+:::
+
+
+##
+
+::: panel-tabset
+
+### Plot
+
+```{r, eval=TRUE, echo=FALSE}
+library(leaflet)
+
+leaflet(china_provinces) %>%
+  addProviderTiles(providers$OpenStreetMap) %>%  
+  addPolygons(fillColor = ~colorQuantile("YlOrRd", diss_me, n = 5)(diss_me),  
+              color = "black",
+              weight = 1,
+              opacity = 1,
+              fillOpacity = 0.5,
+              smoothFactor = 0.5,
+              highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                  bringToFront = TRUE),
+              popup = ~paste(name_en))  
+
+```
+
+
+### Code
+
+
+```{r, eval=FALSE, echo=TRUE}
+library(leaflet)
+leaflet(china_provinces) %>%
+  addProviderTiles(providers$OpenStreetMap) %>%  
+  addPolygons(fillColor = ~colorQuantile("YlOrRd", diss_me, n = 5)(diss_me),  
+              color = "black",
+              weight = 1,
+              opacity = 1,
+              fillOpacity = 0.5,
+              smoothFactor = 0.5,
+              highlightOptions = highlightOptions(color = "white",
+                                                  weight = 2,
+                                                  bringToFront = TRUE),
+              popup = ~paste(name_en))  
+
+```
+
+
+:::
+
+##
+
+::: sub
+
+```{r}
+uk_regions <- ne_states(country = "United Kingdom", 
+                        returnclass = "sf")
+ggplot(uk_regions) +
+  geom_sf(fill = "lightgreen", color = "black") +
+  coord_sf(expand = FALSE) +
+  labs(title = "Regions of the United Kingdom")
+```
+
+:::
+
+##
+
+::: panel-tabset
+
+### Plot
+
+```{r, echo=FALSE}
+uk_regions <- ne_states(country = "United Kingdom", returnclass = "sf")
+
+leaflet(uk_regions) %>%
+  addProviderTiles(providers$OpenStreetMap) %>%  
+  addPolygons(fillColor = ~colorQuantile("YlOrRd", diss_me, n = 5)(diss_me), 
+              color = "black",
+              weight = 1,
+              opacity = 1,
+              fillOpacity = 0.5,
+              smoothFactor = 0.5,
+              highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                  bringToFront = TRUE),
+              popup = ~paste(name_en))  
+
+```
+
+
+### Code
+
+```{r, eval=FALSE}
+uk_regions <- ne_states(country = "United Kingdom", returnclass = "sf")
+
+leaflet(uk_regions) %>%
+  addProviderTiles(providers$OpenStreetMap) %>%  
+  addPolygons(fillColor = ~colorQuantile("YlOrRd", diss_me, n = 5)(diss_me), 
+              color = "black",
+              weight = 1,
+              opacity = 1,
+              fillOpacity = 0.5,
+              smoothFactor = 0.5,
+              highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                  bringToFront = TRUE),
+              popup = ~paste(name_en))  
+
+```
+
+:::
+
+::: middle-align-xy
+
+## Data Preparation
+
+::: sub
+
+Map Data
+
+```{r}
+states_sf <- states() %>% 
+  mutate(state = str_to_lower(NAME))
+```
+
+
+Numeric Data
+
+```{r}
+# Reading and preprocessing the COVID data
+covid_final <- read_html("https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota") %>%
+  html_elements(css = "table") %>%
+  html_table() %>%
+  .[[1]] %>%
+  janitor::clean_names() %>%
+  mutate(across(2:4, parse_number)) %>%
+  mutate(state = str_to_lower(state))
+```
+
+:::
+:::
+
+##
+
+::: cle
+
+```{r}
+# find mismatches
+setdiff(states_sf$state, covid_final$state)
+```
+
+<br>
+
+```{r}
+# discard these for more cohesive plot
+c("alaska", "hawaii", setdiff(states_sf$state, covid_final$state))
+```
+
+:::
+
+## Final data
+
+::: zen
+
+```{r}
+states_sf <- left_join(states_sf, covid_final, by = ("state"))
+states_sf
+```
+
+:::
+
+::: {.full-slide-html}
+
+##
+
+```{=html}
+<iframe width="2000" height="2000" src="https://deepbas.shinyapps.io/demoapp/" title="Webpage example"></iframe>
+```
+
+:::
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca20-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- For the remainder of time, let's practice building and deploying a leaflet Shiny app 
+
+:::
+:::
+:::
+
+`r countdown(minutes = 30, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+

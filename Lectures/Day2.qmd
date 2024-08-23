@@ -1,0 +1,497 @@
+---
+title: "R and R Markdown Basics"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+# load necessary packages
+library(tidyverse)
+library(dplyr)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(xaringanExtra)
+library(forcats)
+xaringanExtra::use_panelset()
+xaringanExtra::use_tachyons()
+xaringanExtra::use_clipboard()
+xaringanExtra::use_extra_styles(
+  hover_code_line = TRUE,         
+  mute_unhighlighted_code = TRUE  
+)
+library(flipbookr)
+library(patchwork)
+library(DT)
+library(moderndive)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(palmerpenguins)
+library(broom)
+library(ggResidpanel)
+library(keras)
+library(tensorflow)
+
+select <- dplyr::select
+
+# Set ggplot theme
+theme_set(theme_tufte(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+# renderthis::to_pdf(from = "Day2.html", complex_slides = TRUE, partial_slides = TRUE)
+```
+
+::: middle-align-xy
+## Reproducible data science
+
+What Does Reproducibility Mean in Data Science?
+
+::: bq
+Short-term goals
+
+-   Are the tables and figures reproducible from the code and data?
+-   Does the code work as intended?
+-   In addition to what was done, is it clear **why** it was done? (e.g., how were parameter settings chosen?)
+:::
+:::
+
+::: middle-align-xy
+## Reproducible data science
+
+What Does Reproducibility Mean in Data Science?
+
+::: bq
+Long-term goals
+
+-   Can the code be used for other data?
+-   Can you extend the code to do other things?
+:::
+:::
+
+::: middle-align-xy
+## Toolkit for reproducibility
+
+::: bq
+-   Scriptability → R
+-   Literate programming (code, narrative, output in one place) → Posit <!--  literate = it is readable and easy to learn -->
+-   Version control → Git / GitHub
+:::
+:::
+
+
+::: centered-content
+## Tour: R Markdown (.Rmd content)
+
+::: scroll-output
+::: full-width-image
+<img src="images/rmarkdown1.png" style="width: 220%; height: auto;"/> <br>
+:::
+:::
+:::
+
+::: centered-content
+## Tour: R Markdown (Rendered html)
+
+::: scroll-output
+::: full-width-image
+<img src="images/rmarkdown2.png" style="width: 220%; height: auto;"/> <br>
+:::
+:::
+:::
+
+```{=html}
+<!--
+
+::: {data-background-image="images/rmarkdown1.png" data-background-size="cover"}
+## Tour: R Markdown
+:::
+
+-->
+```
+::: centered-content
+## Text
+
+::: lqt
+Simple rules for:
+
+-   section headers (`#`,`##`,etc)
+-   lists (need \~2 tabs to create sublists)
+-   formatting (bold `**`, italics `*`)
+-   tables
+-   R syntax (use backward tick \`)
+-   web links `[linked text](url)`
+-   latex math equations $\beta_1 + \beta_2$
+:::
+
+::: footer
+For further help, look at [R Markdown Cheatsheet](https://deepbas.io/courses/stat220/cheatsheets/)
+:::
+:::
+
+::: centered-content
+### Code **chunks**, defined by three backticks
+
+```{r, echo=FALSE, comment=FALSE, include=FALSE, message=FALSE}
+library(babynames)
+library(tidyverse)
+library(ggplot2)
+
+filtered_names <- babynames %>% filter(name=="Aimee", year <= max(year), year >= min(year))
+```
+
+::: panel-tabset
+### Code
+
+````         
+```{r}`r ''`
+library(babynames)
+filtered_names <- babynames %>% filter(name=="Amiee", year < max(year), year > min(year)) 
+ggplot(data=filtered_names, aes(x=year, y=prop)) + 
+  geom_line(aes(colour=sex)) + 
+  labs( x = 'Year', 
+        y = 'Prop. of Babies Named Aimee')
+```
+````
+
+### Plot
+
+```{r, echo=FALSE, out.width="100%", fig.align='center'}
+ggplot(data=filtered_names, aes(x=year, y=prop)) + 
+  geom_line(aes(colour=sex)) + 
+  labs( x = 'Year', 
+        y = 'Prop. of Babies Named Aimee')
+```
+:::
+:::
+
+::: middle-align-xy
+## Adding chunks
+
+::: bqt
+Add chunks with button or:
+
+-   Command (or Cmd) `⌘` + Option (or Alt) `⌥` + `i` (Mac)
+-   Ctrl + Alt + `i` (Windows/Linux)
+:::
+:::
+
+::: middle-align-xy
+## Running chunks
+
+::: bqt
+Run chunks by:
+
+-   Run current chunk button (interactive)
+-   Knit button / run all chunks
+:::
+:::
+
+::: centered-content
+## Inline code
+
+::: bql
+::: font80
+How many babies were born with name 'Aimee'?
+
+`` `r knitr::inline_expr(' filtered_names %>% summarise(total = sum(n))')` ``
+
+There are a total of `r  filtered_names %>% summarise(total = sum(n))` babies.
+:::
+:::
+
+<br>
+
+::: bql
+::: font80
+In what year were there highest proportion of babies born with the name `Aimee`?
+
+`` `r knitr::inline_expr(' filtered_names %>% filter(prop == max(prop)) %>% pull(year)')` ``
+
+`Aimee` name was the most popular in `r filtered_names %>% filter(prop == max(prop)) %>%pull(year)`.
+:::
+:::
+:::
+
+::: centered-content
+## Chunk labels
+
+::: columns
+::: {.column width="50%"}
+````         
+```{r peek, echo = FALSE, results = "hide"}`r ''`
+glimpse(filtered_names)
+```
+````
+
+::: bq
+::: font80
+-   Include the chunk label immediately after the language identifier within curly braces, --\> `{r label}`
+    -   Warning: Do not duplicate chunk labels
+-   Configure options after label separated by commas e.g --\> `echo = FALSE`
+:::
+:::
+:::
+
+::: {.column width="50%"}
+````         
+```{r peek, echo = TRUE, results = "show"}`r ''`
+glimpse(filtered_names)
+```
+````
+
+```{r peek, echo = TRUE, results = "show"}
+glimpse(filtered_names)
+```
+:::
+:::
+:::
+
+::: centered-content
+## Chunk options: : echo and eval
+
+::: columns
+::: {.column width="50%"}
+````         
+```{r echo = TRUE, eval = FALSE}`r ''`
+glimpse(filtered_names)
+```
+````
+
+```{r, echo = TRUE, eval = FALSE}
+glimpse(filtered_names)
+```
+:::
+
+::: {.column width="50%"}
+````         
+```{r echo = TRUE, eval = TRUE}`r ''`
+glimpse(filtered_names)
+```
+````
+
+```{r, echo = TRUE, eval = TRUE}
+glimpse(filtered_names)
+```
+:::
+:::
+:::
+
+::: centered-content
+
+## Saving images using chunk options
+
+::: panel-tabset
+
+### Code
+
+````
+```{r plot1, fig.path="img/"}`r ''`
+library(babynames)
+your_name <- "Dee"
+your_name_data <- babynames %>% filter(name == your_name)
+
+ggplot(data=your_name_data, aes(x=year, y=prop)) +
+  geom_point(size = 3, alpha = 0.6) +
+  geom_line(aes(colour = sex), size = 1) +
+  scale_color_brewer(palette = "Set1") +
+  labs( x = 'Year',
+        y = stringr::str_c('Prop. of Babies Named ', your_name),
+        title = stringr::str_c('Trends in Names: ', your_name)) 
+```
+````
+
+### Results
+
+```{r plot1, fig.path="img/", echo=FALSE}
+library(babynames)
+your_name <- "Dee"
+your_name_data <- babynames %>% filter(name == your_name)
+
+ggplot(data=your_name_data, aes(x=year, y=prop)) +
+  geom_point(size = 3, alpha = 0.6) +
+  geom_line(aes(colour = sex), size = 1) +
+  scale_color_brewer(palette = "Set1") +
+  labs( x = 'Year',
+        y = stringr::str_c('Prop. of Babies Named ', your_name),
+        title = stringr::str_c('Trends in Names: ', your_name)) 
+```
+
+
+:::
+:::
+
+
+::: centered-content
+
+## Loading saved images
+
+```{r}
+knitr::include_graphics("img/plot1-1.png")
+```
+
+
+
+:::
+
+
+
+::: centered-content
+## Summary
+
+::: font80
+| Chunk Option      | Outcome                                                                                                          |
+|:------------------------|:-----------------------------------------------------|
+| `echo = FALSE`    | The code is not included in the final document.                                                                  |
+| `include = FALSE` | Neither the code nor its results appear in the document. However, the code executes, and results can be used later. |
+| `message = FALSE` | Any messages produced by the code are not shown in the document.                                                 |
+| `warning = FALSE` | Any warnings generated by the code are omitted from the document.                                                |
+
+
+:::
+
+::: footer
+More on [R Markdown Cheatsheet](https://rstudio.github.io/cheatsheets/rmarkdown.pdf)
+:::
+:::
+
+
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+::: lqt
+-   Please clone the `ca2-yourusername` repository from  [Github](https://github.com/DataScienceSpring24) 
+- Do the class activity in your group
+- You may find the [class helper web page](https://stat220-spring24.netlify.app/) useful
+- Regularly push your changes back to Github 
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+::: centered-content
+
+## Variables
+
+Variables are used to store data, figures, model output, etc.
+
+::: columns
+::: {.column width="50%"}
+::: bq
+Assign just one value
+
+```{r}
+x <- 5
+x
+```
+
+Assign a vector of values
+
+```{r}
+a <- 3:10
+a
+```
+
+:::
+:::
+
+
+::: {.column width="50%"}
+::: bq
+Concatenate a string of numbers
+
+```{r}
+b <- c(5, 12, 2, 100, 8)
+b
+```
+
+Concatenate a string of characters
+
+```{r}
+names <- c("Amy", "Dee", "Lux")
+names
+```
+
+:::
+:::
+:::
+
+:::
+
+::: centered-content
+## A few things to remember
+
+::: bql
+::: font80
+-   Do not use special characters such as `$` or `%`. Common symbols that are used in variable names include `.` or `_`.
+-   Remember that `R` is case sensitive.
+-   To assign values to objects, we use the assignment operator `<-`. Recommend to use `<-` to assign values to objects and `=` within functions.
+-   The `#` symbol is used for commenting and demarcation. Any code following `#` will not be executed.
+:::
+:::
+:::
+
+::: centered-content
+### R Objects
+
+::: bqt
+-   Vectors and data frames are examples of ***objects*** in R.
+-   There are other types of R objects to store data, such as matrices, arrays, lists.
+    -   <center><img src="images/dataobject.png" width="70%" height="50%"/> <br></center>
+:::
+
+::: footnote
+[Source: Ceballos and Cardiel 2013, Data structures in R](https://excelunplugged.com/2021/11/19/r-beginner-tutorial-lists/). 
+:::
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+::: lqt
+- Please do Problem 2 on the class activity for today
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

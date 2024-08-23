@@ -1,0 +1,639 @@
+---
+title: "Tidy Data and Dates"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+
+# load necessary packages
+library(tidyverse)
+library(dplyr)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(forcats)
+library(patchwork)
+library(DT)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(palmerpenguins)
+library(broom)
+library(ggrepel)
+library(lubridate)
+library(maps)
+library(polite)
+library(rvest)
+library(stringr)
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+
+
+# data
+
+BP_wide <- tibble(id = letters[1:4],
+                     sex = c("F", "M", "M", "F"),
+                     SBP_v1 = c(130, 120, 130, 119),
+                     SBP_v2 = c(110, 116, 136, 106),
+                     SBP_v3 = c(112, 122, 138, 118))
+
+```
+
+
+
+
+## What are tidy data?
+
+::: mre
+1. Each [variable]{.green-h} forms a column
+2. Each [observation]{.green-h} forms a row 
+3. Each [value]{.green-h} has its own cell
+:::
+
+![](images/r4ds_tidy_data.png)
+
+::: footer
+[G. Grolemond & H. Wickham's R for Data Science](https://r4ds.had.co.nz/tidy-data.html)
+:::
+
+
+## Untidy data: example 1
+
+::: eqt
+
+```{r, eval=FALSE}
+untidy_data <- tibble(
+  name = c("Ana","Bob","Cara"),
+  wt_07_01_2021 = c(100, 150, 140),
+  wt_08_01_2021 = c(104, 155, 138),
+  wt_09_01_2021 = c(NA, 160, 142)
+)
+```
+
+
+```{r, echo=FALSE}
+untidy_data <- tibble(
+  name = c("Ana","Bob","Cara"),
+  wt_07_01_2021 = c(100, 150, 140),
+  wt_08_01_2021 = c(104, 155, 138),
+  wt_09_01_2021 = c(NA, 160, 142)
+)
+untidy_data
+```
+
+:::
+
+## Tidy data: example 1
+
+::: eqt
+
+```{r}
+library(tidyr)  # for tidying messy data
+library(lubridate)  # for date manipulations
+library(stringr) # for string manipulations
+untidy_data %>% 
+  pivot_longer(names_to = "date",  
+               values_to = "weight", 
+               cols = -name) %>%
+  mutate(date = stringr::str_remove(date,"wt_"), 
+         date = lubridate::dmy(date))    
+```
+
+:::
+
+::: footer
+[tidyr Cheatcheet](https://rstudio.github.io/cheatsheets/tidyr.pdf)
+:::
+
+
+## Wide data
+
+[Wide data has one row per subject, with multiple columns for their repeated measurements]{.green-h}
+
+```{r, echo=FALSE}
+library(kableExtra)
+library(dplyr)
+
+# Create the data frame
+df <- data.frame(
+  id = c('a', 'b', 'c', 'd'),
+  SBP_visit1 = c(132, 120, 130, 118),
+  SBP_visit2 = c(100, 106, 126, 116),
+  SBP_visit3 = c(111, 112, 128, 108)
+)
+
+# Define the colors for the SBP values
+sbp_values <- unique(c(df$SBP_visit1, df$SBP_visit2, df$SBP_visit3))
+color_palette <- RColorBrewer::brewer.pal(length(sbp_values), "Set3")
+names(color_palette) <- sort(sbp_values)
+
+# Apply cell_spec with the color corresponding to the SBP value
+df <- df %>%
+  mutate(across(starts_with("SBP"), ~cell_spec(., "html", background = color_palette[as.character(.)])))
+
+# Render the table with kable and kableExtra
+kable_styling <- df %>%
+  knitr::kable("html", escape = FALSE, caption = "Wide") %>%
+  kable_styling(full_width = F, position = "left")
+
+# Print the table
+kable_styling
+
+```
+
+
+## Long data
+
+
+:::: {.columns}
+
+::: {.column width="60%"}
+
+<br>
+
+[Long data has multiple rows per subject, with one column for the measurement variable and another indicating from when/where the repeated measures are from]{.green-h}
+
+
+:::
+
+::: {.column width="40%"}
+
+::: font60
+
+```{r, echo=FALSE}
+library(kableExtra)
+library(dplyr)
+
+# Create the data frame for the long format
+df_long <- data.frame(
+  id = rep(c('a', 'b', 'c', 'd'), 3),
+  visit = rep(1:3, each = 4),
+  SBP = c(132, 120, 130, 118, 100, 106, 126, 116, 111, 112, 128, 108)
+)
+
+# Use the same color palette as the wide format
+# Apply cell_spec to the SBP column with the color corresponding to the SBP value
+df_long <- df_long %>%
+  mutate(SBP = cell_spec(SBP, "html", background = color_palette[as.character(SBP)]))
+
+# Render the table with kable and kableExtra
+kable_styling_long <- df_long %>%
+  knitr::kable("html", escape = FALSE, caption = "Long") %>%
+  kable_styling(full_width = F, position = "left") 
+
+# Print the table
+kable_styling_long
+```
+
+:::
+:::
+:::
+
+
+## Wide to long: `pivot_longer()`
+
+::: eqt
+::: font100
+::: {.columns}
+
+::: {.column width="50%"}
+
+```{r}
+BP_wide
+```
+
+:::
+
+
+::: {.column width="50%"}
+
+```{r}
+BP_long <- BP_wide %>%
+  pivot_longer(names_to = "visit",  
+               values_to = "SBP",  
+               cols = SBP_v1:SBP_v3)   
+BP_long
+```
+
+:::
+:::
+:::
+:::
+
+## Wide to long: `pivot_longer()`
+
+::: lqt
+
+`pivot_longer`  lengthens data, increasing the number of rows and decreasing the number of columns.
+
+Need to **specify**:
+
+- *new column names*
+
+  - [names_to]{.bold-text}: stores row names of wide data's columns 
+  - .b[values_to]{.bold-text}: stores data values
+  
+- *which columns to pivot*
+
+:::
+
+
+## Long to wide: `pivot_wider()`
+
+::: eqt
+::: {.columns}
+::: {.column width="50%"}
+
+```{r}
+BP_long
+```
+
+:::
+
+::: {.column width="50%"}
+
+```{r}
+BP_wide1 <- BP_long %>% 
+  pivot_wider(names_from = "visit", 
+              values_from = "SBP") 
+BP_wide1
+```
+
+:::
+:::
+:::
+
+## Long to wide: `pivot_wider()`
+
+::: lqt
+
+`pivot_wider`  increases number of columns and decreases the number of rows.
+
+Need to **specify**:
+
+- *new column names*
+
+  + [names_from]{.bold-text}: get the name of the column 
+  + [values_from]{.bold-text}: get the cell values from
+
+:::
+
+
+
+## Separate Info
+
+::: cle
+::: {.columns}
+::: {.column width="50%"}
+
+```{r}
+BP_long
+```
+
+:::
+
+::: {.column width="50%"}
+
+
+```{r}
+BP_long1 <- BP_long %>%
+  separate(visit, c("type", 
+                    "visit")) 
+BP_long1
+```
+
+:::
+:::
+:::
+
+## `readr::parse_number()`
+
+**Goal**: Extract first number from the visit column and remove the characters
+
+::: eqt
+::: font90
+::: {.columns}
+::: {.column width="50%"}
+
+```{r}
+BP_long
+```
+
+:::
+
+::: {.column width="50%"}
+
+```{r}
+BP_long2 <- BP_long %>% 
+  mutate(visit = parse_number(visit)) 
+BP_long2
+```
+
+:::
+
+:::
+:::
+:::
+
+::: footer
+[`readr` cheat sheet](https://readr.tidyverse.org/)
+:::
+
+
+
+## Make cleaned-up long data wide
+
+::: fsp
+::: font90
+::: {.columns}
+::: {.column width="50%"}
+
+```{r}
+head(BP_long2, 4)
+```
+
+```{r}
+BP_wide2 <- BP_long2 %>% 
+  pivot_wider(names_from = "visit", 
+              values_from = "SBP") 
+BP_wide2
+```
+
+
+:::
+
+::: {.column width="50%"}
+
+::: font70
+- Problem: have numbers as column names  
+- Solution: have row names start with the `key` column's name separated by a character
+:::
+
+
+```{r}
+BP_wide3 <- BP_long2 %>% 
+  pivot_wider(names_from = "visit",     
+              values_from = "SBP",      
+              names_prefix = "value_")  
+BP_wide3
+```
+
+:::
+:::
+:::
+:::
+
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca8-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+## Dates with `lubridate`
+
+::: row
+::: left
+
+::: dse
+::: font90
+- Convert characters to special "Date" type
+
+- Easy date magic examples:
+
+    + add and subtract dates
+    + convert to minutes/years/etc
+    + change timezones
+    + add 1 month to a date...
+
+:::
+:::
+:::
+
+:::right
+
+<center><img src="images/horst_lubridate.png" width="100%" height="100%"><a href="https://github.com/allisonhorst/stats-illustrations"><br>Allison Horst</a>
+</center>
+
+:::
+:::
+
+::: footer
+[`lubridate` cheat sheet](https://rstudio.github.io/cheatsheets/lubridate.pdf)
+:::
+
+
+## What kind of date do you have?
+
+
+<center><img src="images/lubridate_parse_date_times.png" width="55%" height="70%"></center>
+
+
+## Parsing Complex Dates
+
+::: ws
+::: font80
+
+```{r}
+library(lubridate)
+complex_dates <- tibble(
+  name = c("Yi", "Mo", "Dee"),
+  dob = c("31-October-1952 14:30:15",
+          "12-Jan-1984 22:15:00",
+          "02-Feb-2002 10:45:30")
+)
+
+complex_dates %>%
+  mutate(dob_date = dmy_hms(dob)) %>% 
+  knitr::kable()  # to make nice tables
+```
+
+:::
+:::
+
+## Advanced Date Arithmetic
+
+::: ws
+::: font70
+
+```{r}
+complex_dates %>%
+  mutate( dob_date = dmy_hms(dob),
+          dob_year = year(dob_date),
+          time_since_birth = interval(dob_date, now()),
+          age_exact = time_length(time_since_birth, unit = "years")) %>%
+  knitr::kable()
+```
+
+:::
+:::
+
+## Advanced Date Arithmetic: alternate
+
+::: ws
+::: font80
+
+```{r}
+complex_dates %>%
+  mutate(dob_date = dmy_hms(dob),
+        age_exact = as.numeric(interval(dob_date, now()) / years(1))) %>% 
+  knitr::kable()
+```
+
+:::
+:::
+
+## Creating Date-Time Objects with `make_datetime()`
+
+::: ws
+::: font80
+::: {.columns}
+::: {.column width="50%"}
+
+```{r}
+# Components of date and time
+year_component <- 2024
+month_component <- 1
+day_component <- 19
+hour_component <- 9
+minute_component <- 03
+second_component <- 30
+```
+
+:::
+
+
+::: {.column width="50%"}
+
+```{r}
+# Create a date-time object
+date_time_object <- make_datetime(
+  year = year_component,
+  month = month_component,
+  day = day_component,
+  hour = hour_component,
+  min = minute_component,
+  sec = second_component
+)
+```
+
+
+```{r}
+date_time_object 
+```
+
+
+:::
+:::
+:::
+:::
+
+## Advanced Date-Time Arithmetic 
+
+::: ws
+
+```{r}
+date_time <- tibble(date = ymd("2024-01-13", "2024-03-06", "2025-06-30"))
+
+date_time %>%
+  mutate(add_month = date %m+% months(1), 
+         add_year = date %m+% years(1),
+         subtract_week = date %m-% weeks(1)) %>% 
+  knitr::kable()
+```
+
+:::
+
+## Duration and Time Differences
+
+::: prm
+::: font80
+
+```{r}
+time_diff_example <- tibble(
+  start_date = ymd("2024-01-03"),
+  end_date = ymd("2024-03-17")
+)
+
+time_diff_example %>%
+  mutate(time_diff = end_date - start_date,
+         duration_days = time_length(time_diff, unit = "days"),
+         duration_weeks = as.duration(time_diff) / dweeks(1),
+         duration_months = as.duration(time_diff) / dmonths(1),
+         duration_years = as.duration(time_diff) / dyears(1))  %>% 
+  knitr::kable()
+```
+
+:::
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please do the remaining problems in the class activity.
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

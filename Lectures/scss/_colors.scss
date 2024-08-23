@@ -1,0 +1,125 @@
+// _colors.scss
+$body-bg: #F7FCF8;
+$body-color: #28435D;
+$heading-color: #1F4257;
+$link-color: #38BDDE;
+$highlighted-code-bg: #cbdded;
+$inverse-bg: #2c8475;
+$inverse-color: #EDF3EF;
+$inverse-heading-color: #A2DED0;
+$title-slide-bg: #FFC0CB;
+$title-slide-color: #002366;
+$blockquote-border-color: #006699;
+$blockquote-bg: rgba(255,255,255,1);
+$background-color: #1c5253;
+$text-color: #000;
+$border-color: #1c5253;
+$highlight-color: #F2B155;
+$fade-opacity: 0.5;
+
+// Styling for slides
+.scrollable-slide .remark-slide {
+  height: 400px;
+  overflow: scroll;
+  font-size: 20px;
+  color: $text-color;
+  background-color: $body-bg;
+}
+
+// Scroll boxes with various heights
+.scroll-box {
+  &-8, &-10, &-12, &-14, &-16, &-18, &-20, &-22, &-24, &-26, &-28, &-30, &-32 {
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+}
+
+// Common properties for all scroll-box classes
+[class^="scroll-box-"], .scroll-output {
+  padding: 0.5em;
+  border: 1px solid $border-color;
+  border-radius: 15px;
+  box-shadow: 0 0 8px $highlight-color;
+  background-color: $blockquote-bg;
+  margin-bottom: 1em;
+}
+
+.scroll-output {
+  height: 800px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+
+.datatable {
+  width: 100%;
+  height: auto;
+}
+
+.scroll-container {
+  overflow-y: scroll;
+  height: 800px; 
+}
+
+.reveal code {
+  max-height: 100% !important;
+}
+
+// Prevents unnecessary horizontal scroll on code blocks
+pre, .remark-code, .remark-inline-code {
+  font-family: "Courier New", Courier, monospace;
+  background-color: $highlighted-code-bg;
+  border-radius: 5px;
+  padding: 2px 5px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.07);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: 400px;
+}
+
+// Additional custom styles
+.action, .img, .dark-green, .dark-blue, .dark-gray {
+  border-radius: 10px;
+  padding: 0.5em;
+  margin-bottom: 1.5rem;
+}
+
+
+
+.inline-c {
+  background: $inverse-bg;
+  color: $inverse-color;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.green-h, .out-g {
+  background: #9fff9f;
+  color: #215A4A;
+}
+
+.yellow-h, .out-y {
+  background: #ffff9f; 
+  color: #857A30; 
+}
+
+
+// Fade effect
+.fade {
+  opacity: $fade-opacity;
+}
+
+// Code highlights
+.hljs-solarized-light .hljs {
+  color: $body-color;
+}
+
+
+.hljs-github .hljs {
+  background: $background-color;
+  color: white;
+}
+
+

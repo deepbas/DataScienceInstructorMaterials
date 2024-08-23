@@ -1,0 +1,587 @@
+---
+title: "Functions"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+library(tidyverse)
+library(countdown)
+library(ggthemes)
+library(patchwork)
+library(knitr)
+library(tidytext)
+# specific packages
+library(stringr)
+select <- dplyr::select
+
+# Set ggplot theme
+
+yt <- 0
+
+musical_instr_reviews <-  read_csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/musicreviews.csv") %>% 
+  rename(ratingOverall = overall)
+```
+
+
+
+## Functions 
+
+::: cle
+
+A function is a type of object in R that can perform a specific task. 
+
+- Functions take arguments as input and output some manipulated form of the input data.
+- A function is specified first with the object name, then parentheses with arguments inside.
+
+
+```{r}
+# using the sqrt function
+sqrt(4)
+```
+
+:::
+
+
+::: middle-align-xy
+
+## When to write functions?
+
+::: bq
+
+- Using the same code more than once
+- Complicated operation
+- Vectorization
+
+:::
+:::
+
+
+
+## Function arguments
+
+::: eqt
+
+- `x`, `y`, `z`: vectors.
+- `w`: a vector of weights.
+- `df`: a data frame or tibble
+- `i`, `j`: numeric indices (typically rows and columns).
+- `n`: length, or number of rows.
+- `p`: number of columns.
+
+:::
+
+
+
+## Writing Functions{auto-animate=true}
+
+::: scroll-box-20
+```{r, eval=FALSE}
+# Basic Set Up
+my_awesome_function <- function(x,y) # arg1, arg2, etc. 
+
+```
+:::
+
+
+
+
+
+## Writing Functions{auto-animate=true}
+
+::: scroll-box-20
+```{r, eval=FALSE}
+# Basic Set Up
+my_awesome_function <- function(x,y) ## arg1, arg2, etc.
+{ # Brackets that house the code 
+ 
+```
+:::
+
+
+
+
+## Writing Functions{auto-animate=true}
+
+::: scroll-box-20
+```{r, eval=FALSE}
+# Basic Set Up
+my_awesome_function <- function(x,y) # arg1, arg2, etc.
+{ # Brackets that house the code 
+  # Some code to execute  
+
+```
+:::
+
+
+
+
+## Writing Functions{auto-animate=true}
+
+::: scroll-box-20
+```{r, eval=FALSE}
+# Basic Set Up
+my_awesome_function <- function(x,y) # arg1, arg2, etc.
+{ # Brackets that house the code 
+  # Some code to execute 
+  z = x*y  
+
+```
+:::
+
+
+
+## Writing Functions{auto-animate=true}
+
+::: scroll-box-20
+```{r, eval=FALSE}
+# Basic Set Up
+my_awesome_function <- function(x,y) # arg1, arg2, etc.
+{ # Brackets that house the code 
+  # Some code to execute 
+  z = x*y  
+  return(z) # Return a data value 
+
+```
+:::
+
+
+
+## Writing Functions{auto-animate=true}
+
+::: scroll-box-20
+```{r, eval=FALSE}
+# Basic Set Up
+my_awesome_function <- function(x,y) # arg1, arg2, etc.
+{ # Brackets that house the code 
+  # Some code to execute 
+  z = x*y  
+  return(z) # Return a data value  
+} # Close the Brackets   
+```
+:::
+
+
+
+
+## Writing Functions{auto-animate=true}
+
+::: scroll-box-20
+```{r}
+# Basic Set Up
+my_awesome_function <- function(x,y) # arg1, arg2, etc. 
+{ # Brackets that house the code 
+  # Some code to execute 
+  z = x*y  
+  return(z) # Return a data value  
+} # Close the Brackets   
+
+
+# Call the function
+my_awesome_function(x=5,y=6) 
+```
+
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca13-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+## Conditional Execution
+
+
+::: {.row .font80}
+::: {.left}
+
+<br>
+<br>
+
+::: bql
+Allows code to:
+
+- become more flexible 
+- adapt to the input arguments
+- have certain “control flow” constructs 
+:::
+:::
+
+::: right
+
+<img src="images/07_flowchart_homework_graphjam.jpg" width="90%" align="center" />
+
+:::
+:::
+
+
+
+
+## `if-else`
+
+::: eqt
+
+```{r}
+if(TRUE){
+  print("Positive")
+}else{
+  print("Negative")
+}
+```
+
+
+```{r}
+if(FALSE){
+  print("Positive")
+}else{
+  print("Negative")
+}
+```
+
+:::
+
+## `ifelse()`
+
+::: eqt
+
+- Same idea just vectorized
+
+```{r}
+ifelse(TRUE,"Positive","Negative")
+```
+
+
+```{r}
+dplyr::if_else(FALSE,"Positive","Negative")
+```
+
+
+
+```{r}
+x <- 1:5
+ifelse(x<3, "Positive", "Negative")
+```
+
+:::
+
+::: middle-align-xy
+
+## if and ifelse
+
+::: {.eqt}
+
+
+```{r}
+# Use `if` for single condition tests
+cutoff_make0 <- function(x, cutoff = 0){   # default cutoff is 0
+  if(is.numeric(x)){
+    ifelse(x < cutoff, 0, x)
+  } else warning("The input provided is not a numeric vector")
+}
+```
+
+:::
+:::
+
+## if and ifelse: Implementation
+
+::: eqt
+
+```{r}
+x <- c(3, 4, 6, -1)
+y <- c("5", "c", "9", 1)
+```
+
+
+```{r, warning=TRUE}
+# override the default cutoff of 0
+cutoff_make0(x, cutoff = 4)
+```
+
+
+```{r, warning=TRUE}
+# no cutoff given, defaults to 0
+cutoff_make0(x)
+```
+
+
+```{r, warning=TRUE}
+cutoff_make0(y, cutoff = 4)
+```
+
+:::
+
+## Tidy Text
+
+::: row
+::: left
+
+<br>
+
+::: bq
+- tidy data principles
+- works with existing data manipulation tools
+- streamlined integration with other text mining libraries
+:::
+:::
+::: right
+
+
+<img src="images/tidytext.png" width="75%" align="center" />
+
+:::
+:::
+
+
+
+
+
+## Quote from `Neil deGrasse Tyson`
+
+```r
+text <- c("It's not that we are better than the universe, we are part of the
+universe. We are in the universe and the universe is in us. We are all connected; 
+To each other, biologically.")
+```
+
+::: cle
+
+```{r echo = FALSE}
+text <- c("It's not that we are better than the universe, we are part 
+of the universe. We are in the universe and the universe is in us.
+We are all connected; To each other, biologically.")
+```
+
+
+
+```{r}
+text_data <- tibble(text = text)
+text_data %>% pull(text) %>%  writeLines()
+```
+
+:::
+
+## Tokenization
+
+::: scroll-box-40
+```{r demo}
+text_data %>% 
+  unnest_tokens(output = word, 
+                input = text, 
+                token = "words") 
+```
+:::
+
+
+
+## Counting words
+
+::: scroll-box-20
+```{r}
+text_data %>% 
+  unnest_tokens(word,text) %>% 
+  count(word, sort = TRUE)
+```
+:::
+
+
+
+## Stopwords
+
+- `tidytext` comes with a database of common stop words
+
+::: scroll-box-20
+```{r}
+stop_words %>% sample_n(10)
+```
+
+:::
+
+
+## Amazon musical instruments reviews
+
+<div class="image-overlay-container">
+  <img src="images/musical_instruments.jpg" alt="Musical Instruments">
+  <div class="overlay-text" style="top: 20%; left: 0%; transform: translate(0, 0); font-size: 2em; color: yellow;">
+    What is the average sentiment of Amazon 
+    shoppers purchasing musical instruments?
+  </div>
+</div>
+
+
+
+
+
+
+## Glimpse of the dataset
+
+::: {.font50 .scroll-output}
+
+```{r, echo=FALSE}
+set.seed(10)
+musical_instr_reviews %>% slice_sample(n = 4) %>% kable()
+```
+:::
+
+
+## Top words 
+
+::: panel-tabset
+
+### Plot
+
+```{r,demo1, echo=FALSE}
+musical_instr_reviews %>% 
+  select(reviewText) %>%
+  unnest_tokens(output = word, 
+                input = reviewText) %>% 
+  anti_join(stop_words) %>%
+  count(word, sort=TRUE) %>% 
+  top_n(25) %>% 
+  ggplot(aes(fct_reorder(word,n), n)) + 
+  theme_tufte() +
+  geom_col(fill = "#79CA32") + 
+  xlab(NULL) + 
+  coord_flip() + 
+  ggtitle("Top words in Amazon Musical Instruments Reviews") +
+  theme(plot.title = element_text(hjust = 0.5, size = 8)) 
+```
+
+### Code
+
+
+```{r,demo2, eval=FALSE}
+musical_instr_reviews %>% 
+  select(reviewText) %>%
+  unnest_tokens(output = word, 
+                input = reviewText) %>% 
+  anti_join(stop_words) %>%
+  count(word, sort=TRUE) %>% 
+  top_n(25) %>% 
+  ggplot(aes(fct_reorder(word,n), n)) + 
+  theme_tufte() +
+  geom_col(fill = "#79CA32") + 
+  xlab(NULL) + 
+  coord_flip() + 
+  ggtitle("Top words in Amazon Musical Instruments Reviews") +
+  theme(plot.title = element_text(hjust = 0.5, size = 8)) 
+```
+
+:::
+
+## Sentiment Word Cloud
+
+
+::: panel-tabset
+
+### Plot
+
+```{r demo3,  echo=FALSE, fig.width=5, fig.align='center'}
+library(wordcloud)
+library(reshape2) # for acast function
+set.seed(123) # for reproducibility
+
+musical_instr_reviews %>%
+  select(reviewText) %>%
+  unnest_tokens(output=word,
+                input=reviewText) %>%
+  anti_join(stop_words) %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, 
+        value.var = "n", 
+        fill = 0) %>%
+  comparison.cloud(colors = c("blue","purple"),
+                   scale = c(2,0.5),
+                   max.words = 100,
+                   title.size = 2)
+```
+
+### Code
+
+
+```{r demo4,  eval=FALSE, fig.width=5, fig.align='center'}
+library(wordcloud)
+library(reshape2) # for acast function
+set.seed(123) # for reproducibility
+
+musical_instr_reviews %>%
+  select(reviewText) %>%
+  unnest_tokens(output=word,
+                input=reviewText) %>%
+  anti_join(stop_words) %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, 
+        value.var = "n", 
+        fill = 0) %>%
+  comparison.cloud(colors = c("blue","purple"),
+                   scale = c(2,0.5),
+                   max.words = 100,
+                   title.size = 2)
+```
+
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please do the remaining problems in the class activity.
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

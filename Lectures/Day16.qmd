@@ -1,0 +1,423 @@
+---
+title: "Web Scraping"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+```{r setup, include=FALSE}
+# load necessary packages
+library(tidyverse)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(forcats)
+library(patchwork)
+library(DT)
+library(moderndive)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(lubridate)
+library(polite)
+library(rvest)
+library(stringr)
+library(gapminder)
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+```
+
+
+
+
+
+::: middle-align-xy
+
+## Web scraping
+
+::: vvt
+
+the process of downloading, parsing, and extracting data presented in an HTML file and then converting it into a structured format that allows us to analyze it.
+
+:::
+
+:::
+
+::: middle-align-xy
+
+## Two different scenarios:
+
+::: zen
+
+1. Screen scraping: extract data from source code of website, with html parser (easy) or regular expression matching (less easy).
+
+2. Web APIs (application programming interface): website offers a set of structured http requests that return JSON or XML files.
+
+
+:::
+:::
+
+<!-- API is a messenger that takes requests, and then returns a response back to you -->
+
+
+##  `polite` package
+
+
+:::: {.columns}
+
+::: {.column width="20%"}
+
+![](images/polite.png)
+
+:::
+
+::: {.column width="80%"}
+
+::: zen
+
+- Two main functions `bow` and `scrape` define and realize a web harvesting session
+- Builds on awesome toolkits for defining and managing http sessions using `rvest`
+
+:::
+
+:::
+:::
+
+[[Polite Documentation](https://www.rdocumentation.org/packages/polite/versions/0.1.2)]{.footer}
+
+
+## Can we scrape this webpage?
+
+
+![](images/mncorn.png)
+
+[[https://www.mncorn.org/corn-facts/](https://www.mncorn.org/corn-facts/)]{.footer}
+
+
+## `polite`:: bow()  {auto-animate="true"}
+
+::: vvt
+
+```{r}
+bow("https://www.mncorn.org/corn-facts/", user_agent = "data enthusiast")
+```
+
+:::
+
+## `polite`:: scrape() {auto-animate="true"}
+
+::: vvt
+
+```{r}
+bow("https://www.mncorn.org/corn-facts/", user_agent = "data enthusiast") %>% 
+  scrape()
+```
+
+:::
+
+
+## HyperText Markup Language (HTML)
+
+<!-- 
+
+- Each line of code tells the browser how to show every element in your display by assigning tags to each component within the body tag. -->
+
+<!-- - Most of the data on the web is still largely available as HTML -->
+
+::: vvt
+
+HTML page consists of series of elements which browsers use to interpret how to display the content
+
+<center>
+<img src="images/html.png"  width="600" height="400" class="center">
+</center>
+
+:::
+
+<!--
+- Contains all the metadata inside the head tag
+
+- Only need to understand the document’s body tag as there’s where the content we want to scrape resides.
+
+-->
+
+
+
+## HyperText Markup Language (HTML)
+
+::: eqt
+
+While it is structured (hierarchical/tree based) it often is not available in a form useful for analysis (flat/tidy).
+
+
+```html
+<html>
+  <head>
+    <title>This is a title</title>
+  </head>
+  <body>
+    <p align="center">Hello world!</p>
+  </body>
+</html>
+```
+
+:::
+
+[Try HTML code yourself by clicking [here](https://www.w3schools.com/html/tryit.asp?filename=tryhtml_default_default)]{.footer}
+
+
+
+## HTML tags
+
+::: dse
+::: font80
+
+HTML uses `tags` to describe different aspects of document content. `Rvest` is a collection of functions that make basic processing and manipulation of HTML data straight forward.
+
+
+Tag         |  Example
+------------|---------------------------------------------------------------
+heading     | `<h1>My Title</h1>`
+paragraph   | `<p>A paragraph of content...</p>`
+table       | `<table> ... </table>`
+anchor (with attribute)     | `<a href="https://www.mncorn.org/">click here for link</a>`
+
+:::
+:::
+
+
+
+
+::: {.column-screen}
+
+## 
+
+```{=html}
+<iframe width="1080" height="1000" src="https://rvest.tidyverse.org/"></iframe>
+```
+
+[[Rvest](https://rvest.tidyverse.org/) documentation]{.footer}
+
+:::
+
+
+
+## Useful functions
+
+::: cle
+::: font60
+
+Function      | Description
+--------------|---------------------------------------------
+`read_html`   | Read HTML data from a url or character string
+`html_element`| Find HTML element using CSS selectors 
+`html_elements`| Find HTML elements using CSS selectors 
+`html_node`  | Select a specified node from HTML document
+`html_nodes`  | Select specified nodes from HTML document
+`html_table`  | Parse an HTML table into a data frame
+`html_text`   | Extract tag pairs' content
+`html_name`   | Extract tags' names
+`html_attrs`  | Extract all of each tag's attributes
+`html_attr`   | Extract tags' attribute value by name
+
+:::
+:::
+
+## 
+
+<center>
+![](images/f1_drivers.png)
+</center>
+
+[[https://en.wikipedia.org/wiki/List_of_Formula_One_drivers](https://en.wikipedia.org/wiki/List_of_Formula_One_drivers)]{.footer}
+
+
+## Read Wikipedia Tables into R {auto-animate="true"}
+
+::: scroll-box-20
+```{r demo1}
+bow("https://en.wikipedia.org/wiki/List_of_Formula_One_drivers") 
+```
+:::
+
+
+
+
+## Read Wikipedia Tables into R {auto-animate="true"}
+
+::: scroll-box-20
+```{r demo2}
+bow("https://en.wikipedia.org/wiki/List_of_Formula_One_drivers") %>%
+  scrape() 
+```
+:::
+
+
+
+## Read Wikipedia Tables into R {auto-animate="true"}
+
+::: scroll-box-20
+```{r demo3}
+bow("https://en.wikipedia.org/wiki/List_of_Formula_One_drivers") %>%
+  scrape() %>% 
+  html_table() 
+```
+:::
+
+
+
+## Read Wikipedia Tables into R {auto-animate="true"}
+
+::: scroll-box-20
+```{r demo4}
+bow("https://en.wikipedia.org/wiki/List_of_Formula_One_drivers") %>%
+  scrape() %>% 
+  html_table() %>%
+  purrr::pluck(3) 
+```
+:::
+
+
+## CSS 
+
+::: ws
+
+- CSS (Cascading Style Sheets) is a language that describes how HTML elements should be displayed. 
+
+- CSS selectors:
+
+  * shortcuts for selecting HTML elements to style  
+  * can also be used to extract the content of these elements
+
+:::
+
+## SelectorGadget
+
+SelectorGadget is a point-and-click CSS selector, specifically for [Chrome]{.bold-red},  and it comes as a [Chrome Extension](https://chrome.google.com/webstore/detail/selectorgadget/mhjhnkcfbdhnjickkkdbjoemdmbfginb) (Click to install!)
+
+
+![](images/best-picture-2023.png)
+
+[Click [here](https://www.w3schools.com/cssref/css_selectors.asp) for a list of selectors]{.footer}
+
+
+
+## SelectorGadget
+
+
+
+[Select all elements that are related to that object. Next, de-select anything in yellow you do not want]{.green-h}
+
+<center>
+<img src="images/selector.gif"  width="650" height="500" class="center">
+</center>
+
+
+## Read HTML into R
+
+::: hscroll
+::: cle
+```{r}
+MinnesotaVikings <- bow("https://www.pro-football-reference.com/teams/min/2023.htm") %>% 
+  scrape()
+MinnesotaVikings
+```
+:::
+:::
+
+[Click [here](https://www.pro-football-reference.com/teams/min/2023.htm) to go to webpage]{.footer}
+
+
+## Scrapped Table
+
+::: panel-tabset
+
+### Code
+::: font90
+```{r, eval=FALSE}
+Team_Stats <- MinnesotaVikings %>% 
+  html_elements("#div_team_stats") %>% 
+  html_table() %>% .[[1]]  # same as purrr:pluck(1)
+
+library(magrittr) 
+Team_Stats %<>% # %<>% Allows for direct assignment within the pipe
+  set_names(.[1, ]) %>% # Set column names to the first row
+  janitor::clean_names() %>% # Clean names
+  slice(-1) %>% # Remove the first row
+  mutate(across(everything(), ~na_if(.x, ""))) %>% # Convert empty strings to NA
+  type.convert(as.is = TRUE) # Convert columns to their most appropriate type
+
+Team_Stats %>% knitr::kable(caption = "Scrapped data for various team stats") 
+```
+:::
+
+### Data
+
+::: hscroll
+
+```{r, echo=FALSE}
+Team_Stats <- MinnesotaVikings %>% 
+  html_elements("#div_team_stats") %>% 
+  html_table() %>% .[[1]]
+
+library(magrittr) 
+Team_Stats %<>% #  %<>% which allows for direct assignment within the pipe
+  set_names(.[1, ]) %>% # Set column names to the first row
+  janitor::clean_names() %>% # Clean names
+  slice(-1) %>% # Remove the first row
+  mutate(across(everything(), ~na_if(.x, ""))) %>% # Convert any empty strings to NA
+  type.convert(as.is = TRUE) # Convert columns to their most appropriate type
+
+Team_Stats %>% knitr::kable(caption = "Scrapped data for various team stats") 
+```
+:::
+
+:::
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca16-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+

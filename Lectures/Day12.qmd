@@ -1,0 +1,510 @@
+---
+title: "Advanced String Manipulation"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(htmltools.preserve.raw = FALSE)
+options(ggrepel.max.overlaps = Inf)
+
+library(tidyverse)
+library(countdown)
+library(mosaic)
+library(ggthemes)
+library(forcats)
+library(patchwork)
+library(DT)
+library(moderndive)
+library(knitr)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(lubridate)
+library(polite)
+library(rvest)
+library(stringr)
+library(gapminder)
+library(tidytext)
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+```
+
+
+
+## Last time: Quantifiers and Special Characters
+
+
+::: {.row .eqt}
+::: left
+
+Preceding characters are matched ...
+
+- [`*`]{.yellow-h} = 0 or more
+- [`?`]{.yellow-h} = 0 or 1
+- [`+`]{.yellow-h} = 1 or more
+- [`{n}`]{.yellow-h} = exactly n times
+
+:::
+
+::: right
+
+
+Matching character types
+
+- [`\\d`]{.yellow-h} = digit
+- [`\\s`]{.yellow-h} = white space
+- [`\\w`]{.yellow-h} = alphanumeric
+- [`\\t`]{.yellow-h} = tab
+- [`\\n`]{.yellow-h} = newline
+
+:::
+:::
+
+
+[`stringr` [cheatsheet](https://rstudio.github.io/cheatsheets/strings.pdf)]{.footer}
+
+
+## More quantifiers
+
+
+> useful when you want to match a pattern a specific number of times
+
+::: eqt
+
+- [`{n, }`]{.yellow-h} = n or more times
+
+- [`{, m}`]{.yellow-h} =  at most m times
+
+- [`{n, m}`]{.yellow-h} = between n & m times
+
+:::
+
+
+## Alternatives
+
+
+> useful for matching patterns more flexibly
+
+::: eqt
+
+- [`[abc]`]{.yellow-h} = one of [a]{.yellow-h}, [b]{.yellow-h}, or [c]{.yellow-h}
+
+- [`[e-z]`]{.yellow-h} = a letter from [e]{.yellow-h} to [z]{.yellow-h}
+
+- [`[^abc]`]{.yellow-h} = anything other than [a]{.yellow-h}, [b]{.yellow-h}, or [c]{.yellow-h}
+
+:::
+
+
+## Duplicating Groups
+
+> Use escaped numbers (\\\1, \\\2, etc) to repeat a group based on position
+
+
+::: eqt
+
+Which numbers have the same 1st and 3rd digits?
+
+```{r}
+phone_numbers <- c("515 111 2244", 
+                   "310 549 6892", 
+                   "474 234 7548")
+str_view(phone_numbers, "(\\d)\\d\\1")
+```
+
+:::
+
+<details>
+<summary class="answer">Explanation</summary>
+
+[`(\\d)` matches a single digit (from 0 to 9) and captures it into a capturing group. `\\d` matches another single digit (from 0 to 9). `\\1` matches the same digit as the first captured group. 
+]{.font60}
+
+</details>
+
+
+
+
+## `str_view_all()`
+
+::: eqt
+
+```{r}
+name_phone <- c("Moly Robins: 250-999-8878",  
+                "Ali Duluth: 416-908-2044",  
+                "Eli Mitchell: 204.192.9829", 
+                "May Flowers: 250.209.7047")
+```
+
+
+```{r}
+str_view_all(name_phone,
+             pattern = "([2-9][0-9]{2})[.-]([0-9]{3})[.-]([0-9]{4})")
+```
+
+:::
+
+<details>
+<summary class="answer">Explanation</summary>
+[([2-9][0-9]{2}) captures the area code (3 digits), ([0-9]{3}) captures the next 3 digits, ([0-9]{4}) captures the last 4 digits]{.font80}
+</details>
+
+
+
+## `str_replace_all()`
+
+::: eqt
+
+```{r}
+str_replace_all(name_phone,
+pattern = "([2-9][0-9]{2})[.-]([0-9]{3})[.-]([0-9]{4})",
+replacement = "XXX-XXX-XXXX"
+)
+```
+
+
+```{r}
+str_replace_all(name_phone,
+                pattern = "([2-9][0-9]{2})[.-]([0-9]{3})[.-]([0-9]{4})",
+                replacement = "\\1-\\2-XXXX")
+```
+
+:::
+
+## `str_extract_all()`
+
+::: eqt
+
+```{r}
+name_phone <- c("Moly Robins: 250-999-8878", 
+                "Ali Duluth: 416-908-2044", 
+                "Eli Mitchell: 204-192-9829", 
+                "May Flowers: 250-209-7047")
+```
+
+
+```{r}
+str_extract_all(name_phone, "[:alpha:]{2,}", simplify = TRUE) 
+```
+
+:::
+
+## Repetition
+
+::: eqt
+
+```{r}
+aboutMe <- c("my SSN is 536-76-9423 and my age is 55")
+```
+
+
+Repetition using `?`
+
+```{r, collapse=TRUE}
+str_view_all(aboutMe, "\\s\\d?") # space followed by 0 or 1 digit
+```
+
+
+
+Repetition using `+`
+
+
+```{r, , collapse=TRUE}
+str_view_all(aboutMe, "\\s\\d+")  # space followed by 1 or more digits
+```
+
+
+
+Repetition using `*`
+
+```{r, , collapse=TRUE}
+str_view_all(aboutMe, "\\s\\d*")  # space followed by 0 or more digits
+
+```
+
+:::
+
+
+## Case conversion
+
+::: cle
+
+```{r}
+str_to_lower("BEAUTY is in the EYE of the BEHOLDER")
+```
+
+
+```{r}
+str_to_upper("one small step for man, one giant leap for mankind")
+```
+
+
+```{r}
+str_to_title("Aspire to inspire before we expire")
+
+```
+
+```{r}
+str_to_sentence("everything you can imagine is real")
+```
+
+:::
+
+
+::: middle-align-xy
+
+## Alternates: OR
+
+::: eqt
+
+```{r}
+aboutMe <- c("My phone number is 236-748-4508.")
+```
+
+
+```{r}
+str_view(aboutMe,"8|6-")  
+```
+
+
+```{r}
+str_view_all(aboutMe,"(8|6)-")  
+```
+
+:::
+:::
+
+
+## More Duplicating Groups
+
+::: bbb
+
+```{r}
+foo <- c("addidas", "racecar")
+```
+
+
+::: {.row .font100}
+::: left
+
+```{r}
+# two successions
+str_view(foo, "(.)\\1") 
+```
+
+:::
+
+::: right
+
+```{r}
+# strings like `xyzzyx`
+str_view(foo, "(.)(.)(.).\\3\\2\\1")
+```
+
+:::
+:::
+
+
+
+
+```{r}
+str_view(foo, "(.)(.)\\1")
+```
+
+:::
+
+## Finding patterns
+
+::: bbb
+::: row
+::: left
+
+```{r}
+# find the last word in a sentence
+str_view_all("it's a goat.", 
+             "[a-z]+\\.")
+```
+
+:::
+
+::: right
+
+```{r}
+# find word with  `'s`
+str_view_all("it's a goat.", 
+             "[a-z]+\\'\\w")
+```
+
+:::
+:::
+
+
+```{r}
+# find a single letter word separated by spaces
+str_view_all("it's a goat.", "\\s\\w\\b")
+
+```
+
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca12-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+
+
+
+
+<!-- 
+  [`(?=)`] = look ahead, e.g. `i(?=e)` = [i] when it comes before [e]
+
+- [`(?!)`] = negative look ahead, e.g. `i(?!e)` [i] when it comes before something that isn’t [e]
+
+- [`(?<)`] = look behind, e.g. `(?<=e)i` = [i] when it follows [e]
+
+- [`(?<!)`] = negative look behind, e.g. `(?<!e)i` = [i] when it does not follow [e]
+
+-->
+
+
+## `Lookaround` operators
+
+<br>
+
+<img src="images/lookaround.png" width="100%" height="100%"> <br>
+
+
+[Source: click [here](https://www.rexegg.com/regex-lookarounds.html#nav)]{.footer}
+
+
+
+## Positive Look ahead example
+
+
+> [Positive look ahead]{.green-h} operator `x(?=[y])` will find `x` when it comes before `y`
+
+> [Negative]{.green-h} version is `x(?![y])` (`x` when it comes before something that isn’t `y`)
+
+::: ws
+
+```{r}
+# 1+ letters before a period
+str_view_all("it's a goat.","[a-z]+(?=[\\.])") 
+```
+
+:::
+
+
+## Negative Look ahead example
+
+
+> [Positive look ahead]{.green-h} operator `x(?=[y])` will find `x` when it comes before `y`
+
+> [Negative]{.green-h} version is `x(?![y])` (`x` when it comes before something that isn’t `y`)
+
+::: ws
+
+```{r}
+# t NOT followed by a period
+str_view_all("it's a goat.", "t(?![\\.])")
+```
+
+
+:::
+
+## Positive Look behind example
+
+> [Positive look behind]{.green-h} operator `(?<=[x])y` will find `y` when it follows `x`
+
+> [Negative]{.green-h} version is `(?<![x])y` (`y` when it does not follow `x`)
+
+::: ws
+
+```{r}
+# one or more t, if preceded by a letter
+str_view_all("that is a top cat.","(?<=[a-z])t+") 
+```
+
+:::
+
+
+## Negative Look behind example
+
+> [Positive look behind]{.green-h} operator `(?<=[x])y` will find `y` when it follows `x`
+
+> [Negative]{.green-h} version is `(?<![x])y` (`y` when it does not follow `x`)
+
+::: ws
+
+```{r}
+# t and one or more letter not preceded by a letter
+str_view_all("that is a top cat.","(?<![a-z])t[a-z]+") 
+```
+
+:::
+
+::: centered-content
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please do the remaining problems in the class activity.
+- Submit to Gradescope on [moodle](https://moodle.carleton.edu/course/view.php?id=43692) when done!
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::

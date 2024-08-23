@@ -1,0 +1,413 @@
+---
+title: "Advanced Web Scraping"
+title-slide-attributes:
+  data-background-image: images/lake.jpg
+  data-background-size: contain
+  data-background-opacity: "0.5"
+subtitle: "STAT 220"
+author: "Bastola"
+format:
+  revealjs: 
+    theme: [default, scss/main.scss]
+    slide_level: 2
+    slide-number: true
+    preview-links: auto
+    history: true
+    chalkboard: true
+    transition: slide
+    background-transition: fade    
+    touch: false
+    controls: true
+---
+
+
+```{r setup, include=FALSE}
+# load necessary packages
+library(tidyverse)
+library(countdown)
+library(ggthemes)
+library(forcats)
+library(DT)
+library(knitr)
+library(lubridate)
+library(plotly)
+library(polite)
+library(rvest)
+library(stringr)
+select <- dplyr::select
+
+# Set ggplot theme
+# theme_set(theme_stata(base_size = 10))
+
+yt <- 0
+
+# read.csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/agstrat.csv")
+
+base_url <- "https://www.the-numbers.com/movie/budgets/all"
+idx <- seq(1, 6301, 100)
+urls <- map_chr(idx, ~ str_glue("{base_url}/{.x}"))
+
+# Use map_df to scrape and combine tables from all pages, ensuring consistent column types
+df_movies <- map_df(urls, ~ {
+  page_data <- read_html(.x) %>%
+    html_table() %>%
+    .[[1]] %>%
+    tibble::as_tibble(.name_repair = "unique") %>%
+    mutate(across(everything(), as.character))
+  return(page_data)
+})
+
+```
+
+
+## Scrape table {auto-animate="true"}
+
+::: scroll-box-20
+```{r}
+bow(url = "https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota") 
+```
+:::
+
+[Click [here](https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota) to take a look at the webpage]{.footer}
+
+## Scrape table {auto-animate="true"}
+
+::: scroll-box-20
+```{r}
+bow(url = "https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota") %>%
+  scrape() 
+```
+:::
+
+[Click [here](https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota) to take a look at the webpage]{.footer}
+
+## Scrape table {auto-animate="true"}
+
+::: scroll-box-20
+```{r}
+bow(url = "https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota") %>%
+  scrape() %>% 
+  html_elements(css = "table")
+```
+:::
+
+[Click [here](https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota) to take a look at the webpage]{.footer}
+
+
+
+## Scrape table {auto-animate="true"}
+
+::: scroll-box-20
+```{r}
+bow(url = "https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota") %>%
+  scrape() %>% 
+  html_elements(css = "table") %>% 
+  html_table() 
+```
+:::
+
+[Click [here](https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota) to take a look at the webpage]{.footer}
+
+
+## Scrape table {auto-animate="true"}
+
+::: scroll-box-20
+```{r}
+#| column: screen
+bow(url = "https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota") %>%
+  scrape() %>% 
+  html_elements(css = "table") %>% 
+  html_table() %>% 
+  pluck(1) 
+```
+:::
+
+[Click [here](https://usafacts.org/visualizations/covid-vaccine-tracker-states/state/minnesota) to take a look at the webpage]{.footer}
+
+
+
+## Scraping multiple tables {auto-animate="true"}
+
+::: vvt
+
+```{r}
+all_url <- "https://finance.yahoo.com/screener/predefined/day_gainers?count=25&offset="
+```
+
+:::
+
+[Click [here](https://finance.yahoo.com/gainers?count=25&offset=0) to take a look at the webpage]{.footer}
+
+
+
+
+## Scraping multiple tables {auto-animate="true"}
+
+::: vvt
+
+```{r}
+all_url <- "https://finance.yahoo.com/screener/predefined/day_gainers?count=25&offset="
+idx <- seq(0, 1050, by = 25)
+```
+
+:::
+
+[Click [here](https://finance.yahoo.com/gainers?count=25&offset=0) to take a look at the webpage]{.footer}
+
+
+
+
+## Scraping multiple tables {auto-animate="true"}
+
+::: vvt
+
+```{r}
+all_url <- "https://finance.yahoo.com/screener/predefined/day_gainers?count=25&offset="
+idx <- seq(0, 1050, by = 25)
+read_html(str_glue("{all_url}{idx[1]}")) 
+```
+
+:::
+
+[Click [here](https://finance.yahoo.com/gainers?count=25&offset=0) to take a look at the webpage]{.footer}
+
+
+
+## Scraping multiple tables {auto-animate="true"}
+
+::: vvt
+
+```{r}
+all_url <- "https://finance.yahoo.com/screener/predefined/day_gainers?count=25&offset="
+idx <- seq(0, 1050, by = 25)
+read_html(str_glue("{all_url}{idx[1]}")) %>% 
+  html_table() 
+```
+
+:::
+
+[Click [here](https://finance.yahoo.com/gainers?count=25&offset=0) to take a look at the webpage]{.footer}
+
+
+
+## Scraping multiple tables {auto-animate="true"}
+
+::: vvt
+
+```{r}
+all_url <- "https://finance.yahoo.com/screener/predefined/day_gainers?count=25&offset="
+idx <- seq(0, 1050, by = 25)
+read_html(str_glue("{all_url}{idx[1]}")) %>% 
+  html_table() %>% 
+  purrr::pluck(1) 
+```
+
+:::
+
+[Click [here](https://finance.yahoo.com/gainers?count=25&offset=0) to take a look at the webpage]{.footer}
+
+
+
+
+
+## Scraping multiple tables {auto-animate="true"}
+
+::: vvt
+
+```{r}
+all_url <- "https://finance.yahoo.com/screener/predefined/day_gainers?count=25&offset="
+idx <- seq(0, 1050, by = 25)
+read_html(str_glue("{all_url}{idx[1]}")) %>% 
+  html_table() %>% 
+  purrr::pluck(1) %>% 
+  janitor::clean_names() 
+```
+
+:::
+
+[Click [here](https://finance.yahoo.com/gainers?count=25&offset=0) to take a look at the webpage]{.footer}
+
+## Scraping multiple tables {auto-animate="true"}
+
+::: vvt
+
+```{r}
+all_url <- "https://finance.yahoo.com/screener/predefined/day_gainers?count=25&offset="
+idx <- seq(0, 1050, by = 25)
+read_html(str_glue("{all_url}{idx[1]}")) %>% 
+  html_table() %>% 
+  purrr::pluck(1) %>% 
+  janitor::clean_names() %>% 
+  mutate(across(everything(), as.character)) # for consistent data joins
+```
+
+:::
+
+[Click [here](https://finance.yahoo.com/gainers?count=25&offset=0) to take a look at the webpage]{.footer}
+
+
+
+## 
+
+
+::: zen
+::: font80
+::: panel-tabset
+
+### Code
+
+
+```{r}
+all_url <- "https://finance.yahoo.com/screener/predefined/day_gainers?count=25&offset="
+idx <- seq(0, 1050, by = 25)
+
+my_df <- map_df(idx, ~ {
+  new_webpage <- read_html(str_glue("{all_url}{.x}")) 
+  table_new <- html_table(new_webpage)[[1]] %>%
+    janitor::clean_names() %>% 
+    mutate(across(everything(), as.character))
+  return(table_new)
+})
+
+```
+
+
+
+### Data
+
+::: scroll-container
+::: hscroll
+
+```{r, echo=FALSE}
+DT::datatable(
+  my_df %>% select(-x52_week_range),
+  fillContainer = FALSE, options = list(pageLength = 5, scrollY = '400px', scrollX='1200px')
+)
+```
+
+
+:::
+:::
+
+:::
+:::
+:::
+
+::: centered-content
+
+## <i class="fa fa-pencil-square-o" style="font-size:48px;color:purple"> Group Activity `r (yt <- yt + 1)`</i> {background="#ffdf9e"}
+
+::: row
+::: left
+![](https://media.giphy.com/media/RKApDdwsQ6jkwd6RNn/giphy.gif)
+:::
+
+::: right
+
+<br>
+
+::: lqt
+
+- Please clone the `ca17-yourusername` repository from  [Github](https://github.com/DataScienceSpring24)
+- Please do the problem 1 in the class activity for today
+:::
+:::
+:::
+
+`r countdown(minutes = 10, seconds = 00, top = 0 , left = 0, color_background = "inherit", padding = "3px 4px", font_size = "1em")`
+:::
+
+##
+
+<center>
+![](images/numbers_scraping.png){width = "80%}
+</center>
+
+
+
+## Scrape, Tidy, and Visualize
+
+
+```{r,demo3}
+df_movies %>% 
+mutate(
+  ID = row_number(), 
+  ProductionBudget = parse_number(ProductionBudget),
+  DomesticGross = parse_number(DomesticGross),
+  WorldwideGross = parse_number(WorldwideGross),
+  ReleaseDate = mdy(ReleaseDate),
+  MonthOfRelease = month(ReleaseDate, label = TRUE, abbr = TRUE),
+  YearOfRelease = year(ReleaseDate)
+) %>%
+replace_na(list(ReleaseDate = make_date(year = 1900))) %>%
+  group_by(MonthOfRelease) %>%
+  summarize(AverageByMonth = mean(DomesticGross, na.rm = TRUE)) -> 
+  df_DomesticGross_month
+```
+
+
+##
+
+::: panel-tabset
+
+#### Plot
+
+::: full-slide-img
+
+```{r, echo=FALSE, out.width="70%"}
+library(plotly)
+fig <- df_DomesticGross_month %>% plot_ly(labels = ~MonthOfRelease, values = ~AverageByMonth)
+fig <- fig %>% add_pie(hole = 0.6)
+fig <- fig %>% layout(title = "Average Domestic Gross by Month",  showlegend = F,
+                      xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                      yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+fig
+```
+
+:::
+
+#### Code
+
+```{r, eval=FALSE}
+library(plotly)
+fig <- df_DomesticGross_month %>% 
+  plot_ly(labels = ~MonthOfRelease, values = ~AverageByMonth)
+fig <- fig %>% add_pie(hole = 0.6)
+fig <- fig %>% layout(title = "Average Domestic Gross by Month",  
+                      showlegend = F,
+                      xaxis = list(showgrid = FALSE, 
+                                   zeroline = FALSE, 
+                                   showticklabels = FALSE),
+                      yaxis = list(showgrid = FALSE, 
+                                   zeroline = FALSE, 
+                                   showticklabels = FALSE))
+
+fig
+```
+
+:::
+
+
+## DT: Interactive Data Tables
+
+:::{.column-page}
+::: owh
+::: font70
+::: scroll-container
+::: hscroll
+
+```{r}
+library(ggplot2movies)
+library(DT)
+movies %>% select(1:6) %>% tidyr::drop_na(budget) %>% 
+  filter(rating > 8, votes > 1000) %>% 
+  datatable(fillContainer = FALSE,  options = list(pageLength = 6, scrollY = '400px'))
+```
+
+:::
+:::
+:::
+:::
+:::
+
